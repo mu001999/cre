@@ -5,12 +5,19 @@ namespace cre
 {
 	class Pattern
 	{
+	private:
+
 	public:
 
-		Pattern(char *pattern, int flags) {}
+		Pattern(
+			char *pattern, int flags) 
+		{
+			
+		}
 		~Pattern() {}
 
-		int match(char *str)
+		int match(
+			char *str)
 		{
 
 		}
@@ -18,12 +25,15 @@ namespace cre
 
 	class Cre
 	{
+	private:
+
 	public:
 
 		Cre() {}
 		~Cre() {}
 
-		static int match(char *pattern, char *str, int flags)
+		static int match(
+			char *pattern, char *str, int flags)
 		{
 			Pattern _pattern(pattern, flags);
 			return _pattern.match(str);
