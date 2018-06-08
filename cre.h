@@ -1,6 +1,9 @@
 #ifndef _CRE_H_
 #define _CRE_H_
 
+#include <string>
+#include <cstring>
+
 namespace cre
 {
 	class Pattern
@@ -10,14 +13,25 @@ namespace cre
 	public:
 
 		Pattern(
-			char *pattern, int flags) 
+			const char *pattern, const int &flags) 
 		{
 			
+		}
+		Pattern(
+			const std::string &pattern, const int &flags)
+		{
+
 		}
 		~Pattern() {}
 
 		int match(
-			char *str)
+			const char *str)
+		{
+
+		}
+
+		int match(
+			const std::string &pattern)
 		{
 
 		}
@@ -32,8 +46,9 @@ namespace cre
 		Cre() {}
 		~Cre() {}
 
+		template <typename T>
 		static int match(
-			char *pattern, char *str, int flags)
+			const T &pattern, const T &str, const int &flags)
 		{
 			Pattern _pattern(pattern, flags);
 			return _pattern.match(str);
