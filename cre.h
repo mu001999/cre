@@ -6,19 +6,60 @@
 
 namespace cre
 {
-	class Pattern
+	enum class STATE
+	{
+		START,
+		MID,
+		END
+	};
+
+	class State
+	{
+
+	};
+
+	class StarState : public State
+	{
+
+	};
+
+	class PlusState : public State
+	{
+
+	};
+
+	class DotState : public State
+	{
+
+	};
+
+	class NFA
 	{
 	private:
 
 	public:
 
+		NFA(const char *pattern, const int &flags)
+		{
+			
+		}
+	};
+
+	class Pattern
+	{
+	private:
+
+		NFA nfa;
+
+	public:
+
 		Pattern(
-			const char *pattern, const int &flags) 
+			const char *pattern, const int &flags) : nfa(pattern, flags)
 		{
 			
 		}
 		Pattern(
-			const std::string &pattern, const int &flags)
+			const std::string &pattern, const int &flags) : nfa(pattern.c_str(), flags)
 		{
 
 		}
