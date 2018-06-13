@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstring>
+#include <memory>
 
 namespace cre
 {
@@ -15,22 +16,32 @@ namespace cre
 
 	class State
 	{
+	public:
 
+		STATE state;
+		std::shared_ptr<State> next;
+		State(STATE state, std::shared_ptr<State> next = nullptr) : state(state), next(next) {}
+		virtual ~State() = 0 {};
+	};
+
+	class SingleCharState : public State
+	{
+		SingleCharState(char chr) : State(STATE::MID) {}
 	};
 
 	class StarState : public State
 	{
-
+		StarState(std::shared_ptr<State>) : State(STATE::MID) {}
 	};
 
 	class PlusState : public State
 	{
-
+		PlusState() : State(STATE::MID) {}
 	};
 
 	class DotState : public State
 	{
-
+		DotState() : State(STATE::MID) {}
 	};
 
 	class NFA
@@ -41,7 +52,10 @@ namespace cre
 
 		NFA(const char *pattern, const int &flags)
 		{
-			
+			while (*pattern)
+			{
+				++pattern;
+			}
 		}
 	};
 
