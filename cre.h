@@ -5,6 +5,7 @@
 #include <cstring>
 #include <memory>
 
+
 namespace cre
 {
 	enum class STATE
@@ -13,6 +14,7 @@ namespace cre
 		MID,
 		END
 	};
+
 
 	class State
 	{
@@ -24,25 +26,30 @@ namespace cre
 		virtual ~State() = 0 {};
 	};
 
+
 	class SingleCharState : public State
 	{
 		SingleCharState(char chr) : State(STATE::MID) {}
 	};
+
 
 	class StarState : public State
 	{
 		StarState(std::shared_ptr<State>) : State(STATE::MID) {}
 	};
 
+
 	class PlusState : public State
 	{
 		PlusState() : State(STATE::MID) {}
 	};
 
+
 	class DotState : public State
 	{
 		DotState() : State(STATE::MID) {}
 	};
+
 
 	class NFA
 	{
@@ -59,6 +66,7 @@ namespace cre
 		}
 	};
 
+
 	class Pattern
 	{
 	private:
@@ -67,30 +75,28 @@ namespace cre
 
 	public:
 
-		Pattern(
-			const char *pattern, const int &flags) : nfa(pattern, flags)
+		Pattern(const char *pattern,const int &flags) : nfa(pattern, flags)
 		{
 			
 		}
-		Pattern(
-			const std::string &pattern, const int &flags) : nfa(pattern.c_str(), flags)
+		Pattern(const std::string &pattern, const int &flags) : nfa(pattern.c_str(), flags)
 		{
 
 		}
 		~Pattern() {}
 
-		int match(
-			const char *str)
+
+		int match(const char *str)
 		{
 
 		}
 
-		int match(
-			const std::string &pattern)
+		int match(const std::string &pattern)
 		{
 
 		}
 	};
+
 
 	class Cre
 	{
@@ -102,8 +108,7 @@ namespace cre
 		~Cre() {}
 
 		template <typename T>
-		static int match(
-			const T &pattern, const T &str, const int &flags)
+		static int match(const T &pattern, const T &str, const int &flags)
 		{
 			Pattern _pattern(pattern, flags);
 			return _pattern.match(str);
