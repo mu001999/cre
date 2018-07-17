@@ -87,7 +87,7 @@ namespace cre
 
 		Node() {}
 		virtual ~Node() {}
-		virtual std::shared_ptr<NFA> compile() {};
+		virtual std::shared_ptr<NFA> compile() {}
 
 		static std::shared_ptr<Node> get_node(const char *pattern, const int &flags)
 		{
