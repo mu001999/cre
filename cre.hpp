@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <vector>
 #include <memory>
 
 /* grammar
@@ -30,61 +31,46 @@ closuretail
 namespace cre
 {
 
+	class NFANode
+	{
+	public:
+
+		// node 0 defaults to the start node
+		enum class EdgeType
+		{
+			EPSILON,
+			CCL,
+			EMPTY
+		} edge;
+		std::vector<int> inputSet;
+		std::shared_ptr<NFANode> next;
+		std::shared_ptr<NFANode> next2;
+
+		NFANode() : next(nullptr), next2(nullptr) {}
+	};
+
 	class NFA
 	{
 	public:
-		// node 0 defaults to the start node
-		char edges[100][100];
-		int end;
 
-		NFA() : end(0) 
+		std::shared_ptr<NFANode> start;
+		std::shared_ptr<NFANode> end;
+
+		NFA() 
 		{
-			memset(edges, 0, sizeof(edges));
+			start = std::make_shared<NFANode>();
+			end = std::make_shared<NFANode>();
 		}
-
-		int transfer(int s, char c)
-		{
-			for (int i = 0; i < 100; ++i)
-			{
-				if (edges[s][i] == c) return i;
-			}
-			std::cout << "can't find the valid edge" << std::endl;
-			exit(0);
-			return s;
-		}
-
-		friend std::shared_ptr<NFA> cat(std::shared_ptr<const NFA>, std::shared_ptr<const NFA>);
-		friend std::shared_ptr<NFA> select(std::shared_ptr<const NFA>, std::shared_ptr<const NFA>);
-		friend std::shared_ptr<NFA> closure(std::shared_ptr<const NFA>);
+		NFA(std::shared_ptr<NFANode> start, std::shared_ptr<NFANode> end) : start(start), end(end) {}
 	};
-
-
-	static std::shared_ptr<NFA> cat(std::shared_ptr<const NFA> left, std::shared_ptr<const NFA> right)
-	{
-		auto nfa = std::make_shared<NFA>();
-		return nfa;
-	}
-
-	static std::shared_ptr<NFA> select(std::shared_ptr<const NFA> left, std::shared_ptr<const NFA> right)
-	{
-		return std::make_shared<NFA>();
-	}
-
-	static std::shared_ptr<NFA> closure(std::shared_ptr<const NFA> nfa)
-	{
-		return std::make_shared<NFA>();
-	}
 
 
 	class Node
 	{
-	private:
-
 	public:
 
 		virtual ~Node() {}
 		virtual std::shared_ptr<NFA> compile() = 0;
-
 	};
 
 	class LeafNode : public Node
@@ -99,7 +85,12 @@ namespace cre
 		virtual std::shared_ptr<NFA> compile()
 		{
 			auto ptr = std::make_shared<NFA>();
-			ptr->edges[0][++(ptr->end)] = leaf;
+
+			ptr->start->edge = NFANode::EdgeType::CCL;
+			ptr->end->edge = NFANode::EdgeType::EMPTY;
+			ptr->start->inputSet.push_back(leaf);
+			ptr->start->next = ptr->end;
+
 			return ptr;
 		}
 	};
@@ -116,7 +107,14 @@ namespace cre
 		CatNode(std::shared_ptr<Node> left, std::shared_ptr<Node> right) : left(left), right(right) {}
 		virtual std::shared_ptr<NFA> compile()
 		{
-			return cat(left->compile(), right->compile());
+			auto left = this->left->compile();
+			auto right = this->right->compile();
+			auto ptr = std::make_shared<NFA>(left->start, right->end);
+
+			left->end->edge = NFANode::EdgeType::EPSILON;
+			left->end->next = right->start;
+
+			return ptr;
 		}
 	};
 
@@ -132,7 +130,21 @@ namespace cre
 		SelectNode(std::shared_ptr<Node> left, std::shared_ptr<Node> right) : left(left), right(right) {}
 		virtual std::shared_ptr<NFA> compile()
 		{
-			return std::make_shared<NFA>();
+			auto left = this->left->compile();
+			auto right = this->right->compile();
+			auto ptr = std::make_shared<NFA>();
+
+			ptr->start->edge = NFANode::EdgeType::EPSILON;
+			ptr->end->edge = NFANode::EdgeType::EMPTY;
+			ptr->start->next = left->start;
+			ptr->start->next2 = right->start;
+			
+			left->end->edge = NFANode::EdgeType::EPSILON;
+			right->end->edge = NFANode::EdgeType::EPSILON;
+			left->end->next = ptr->end;
+			right->end->next = ptr->end;
+
+			return ptr;
 		}
 	};
 
@@ -147,7 +159,19 @@ namespace cre
 		ClosureNode(std::shared_ptr<Node> content) : content(content) {}
 		virtual std::shared_ptr<NFA> compile()
 		{
-			return std::make_shared<NFA>();
+			auto content = this->content->compile();
+			auto ptr = std::make_shared<NFA>();
+
+			ptr->start->edge = NFANode::EdgeType::EPSILON;
+			ptr->start->next = content->start;
+			ptr->start->next2 = ptr->end;
+			ptr->end->edge = NFANode::EdgeType::EMPTY;
+			
+			content->end->edge = NFANode::EdgeType::EPSILON;
+			content->end->next = content->start;
+			content->end->next2 = ptr->end;
+
+			return ptr;
 		}
 	};
 
@@ -212,21 +236,12 @@ namespace cre
 
 		int match(const char *str)
 		{
-			int state = 0;
-			auto reading = str;
-			while (*reading)
-			{
-				state = nfa_ptr->transfer(state, *reading);
-				++reading;
-			}
-			return state == nfa_ptr->end;
+
 		}
 
 		int match(const std::string &str)
 		{
-			int state = 0;
-			for (auto &c : str) state = nfa_ptr->transfer(state, c);
-			return state == nfa_ptr->end;
+
 		}
 	};
 
