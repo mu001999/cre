@@ -3,9 +3,9 @@
 
 #include <iostream>
 #include <string>
-#include <cstring>
 #include <vector>
 #include <memory>
+#include <cstring>
 
 /* grammar
 expr
@@ -219,19 +219,18 @@ namespace cre
 	class Pattern
 	{
 	private:
-		std::shared_ptr<NFA> nfa_ptr;
+		std::shared_ptr<NFA> nfa;
 
 	public:
 
 		Pattern(const char *pattern)
 		{
-			nfa_ptr = get_node(pattern)->compile();
+			nfa = get_node(pattern)->compile();
 		}
 		Pattern(const std::string &pattern)
 		{
-			nfa_ptr = get_node(pattern.c_str())->compile();
+			nfa = get_node(pattern.c_str())->compile();
 		}
-		~Pattern() {}
 
 
 		int match(const char *str)
