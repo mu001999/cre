@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <algorithm>
 #include <cstring>
 
 /* grammar
@@ -235,12 +236,32 @@ namespace cre
 
 		int match(const char *str)
 		{
-
+			auto reading = str;
+			auto state = nfa->start;
+			while (*reading) 
+			{
+				if (state == nfa->end) break;
+				else if (std::find(state->inputSet.begin(), state->inputSet.end(), *reading) == state->inputSet.end()) break;
+				else state = state->next;
+				++reading;
+			}
+			if (state == nfa->end) return 0;
+			return 1;
 		}
 
 		int match(const std::string &str)
 		{
-
+			auto reading = str.c_str();
+			auto state = nfa->start;
+			while (*reading)
+			{
+				if (state == nfa->end) break;
+				else if (std::find(state->inputSet.begin(), state->inputSet.end(), *reading) == state->inputSet.end()) break;
+				else state = state->next;
+				++reading;
+			}
+			if (state == nfa->end) return 0;
+			return 1;
 		}
 	};
 
