@@ -48,6 +48,7 @@ namespace cre
 		std::shared_ptr<NFANode> next2;
 
 		NFANode() : next(nullptr), next2(nullptr) {}
+
 	};
 
 	class NFA
@@ -57,12 +58,9 @@ namespace cre
 		std::shared_ptr<NFANode> start;
 		std::shared_ptr<NFANode> end;
 
-		NFA() 
-		{
-			start = std::make_shared<NFANode>();
-			end = std::make_shared<NFANode>();
-		}
+		NFA() : start(std::make_shared<NFANode>()), end(std::make_shared<NFANode>()) {}
 		NFA(std::shared_ptr<NFANode> start, std::shared_ptr<NFANode> end) : start(start), end(end) {}
+
 	};
 
 
@@ -72,6 +70,7 @@ namespace cre
 
 		virtual ~Node() {}
 		virtual std::shared_ptr<NFA> compile() = 0;
+
 	};
 
 	class LeafNode : public Node
@@ -94,6 +93,7 @@ namespace cre
 
 			return ptr;
 		}
+
 	};
 
 	class CatNode : public Node
@@ -117,6 +117,7 @@ namespace cre
 
 			return ptr;
 		}
+
 	};
 
 	class SelectNode : public Node
@@ -147,6 +148,7 @@ namespace cre
 
 			return ptr;
 		}
+
 	};
 
 	class ClosureNode : public Node
@@ -174,6 +176,7 @@ namespace cre
 
 			return ptr;
 		}
+
 	};
 
 
@@ -220,19 +223,13 @@ namespace cre
 	class Pattern
 	{
 	private:
+
 		std::shared_ptr<NFA> nfa;
 
 	public:
 
-		Pattern(const char *pattern)
-		{
-			nfa = get_node(pattern)->compile();
-		}
-		Pattern(const std::string &pattern)
-		{
-			nfa = get_node(pattern.c_str())->compile();
-		}
-
+		Pattern(const char *pattern) : nfa(get_node(pattern)->compile()) {}
+		Pattern(const std::string &pattern) : nfa(get_node(pattern.c_str())->compile()) {}
 
 		int match(const char *str)
 		{
@@ -263,6 +260,7 @@ namespace cre
 			if (state == nfa->end) return 0;
 			return 1;
 		}
+
 	};
 
 
@@ -289,7 +287,9 @@ namespace cre
 		{
 			return Pattern(pattern).match(str);
 		}
+
 	};
+
 }
 
 #endif // _CRE_H_
