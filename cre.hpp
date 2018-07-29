@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cstring>
 
+
 /* grammar
 expr
 	:
@@ -29,14 +30,22 @@ closuretail
 	;
 */
 
+
 namespace cre
 {
+
+	class DFA
+	{
+	public:
+
+
+	};
+
 
 	class NFANode
 	{
 	public:
-
-		// node 0 defaults to the start node
+		
 		enum class EdgeType
 		{
 			EPSILON,
@@ -51,15 +60,20 @@ namespace cre
 
 	};
 
-	class NFA
+	class NFAPair
 	{
 	public:
 
 		std::shared_ptr<NFANode> start;
 		std::shared_ptr<NFANode> end;
 
-		NFA() : start(std::make_shared<NFANode>()), end(std::make_shared<NFANode>()) {}
-		NFA(std::shared_ptr<NFANode> start, std::shared_ptr<NFANode> end) : start(start), end(end) {}
+		NFAPair() : start(std::make_shared<NFANode>()), end(std::make_shared<NFANode>()) {}
+		NFAPair(std::shared_ptr<NFANode> start, std::shared_ptr<NFANode> end) : start(start), end(end) {}
+
+		std::shared_ptr<DFA> to_dfa()
+		{
+			return nullptr;
+		}
 
 	};
 
@@ -69,7 +83,7 @@ namespace cre
 	public:
 
 		virtual ~Node() {}
-		virtual std::shared_ptr<NFA> compile() = 0;
+		virtual std::shared_ptr<NFAPair> compile() = 0;
 
 	};
 
@@ -82,9 +96,9 @@ namespace cre
 	public:
 
 		LeafNode(char c) : leaf(c) {}
-		virtual std::shared_ptr<NFA> compile()
+		virtual std::shared_ptr<NFAPair> compile()
 		{
-			auto ptr = std::make_shared<NFA>();
+			auto ptr = std::make_shared<NFAPair>();
 
 			ptr->start->edge = NFANode::EdgeType::CCL;
 			ptr->end->edge = NFANode::EdgeType::EMPTY;
@@ -106,11 +120,11 @@ namespace cre
 	public:
 
 		CatNode(std::shared_ptr<Node> left, std::shared_ptr<Node> right) : left(left), right(right) {}
-		virtual std::shared_ptr<NFA> compile()
+		virtual std::shared_ptr<NFAPair> compile()
 		{
 			auto left = this->left->compile();
 			auto right = this->right->compile();
-			auto ptr = std::make_shared<NFA>(left->start, right->end);
+			auto ptr = std::make_shared<NFAPair>(left->start, right->end);
 
 			left->end->edge = NFANode::EdgeType::EPSILON;
 			left->end->next = right->start;
@@ -130,11 +144,11 @@ namespace cre
 	public:
 
 		SelectNode(std::shared_ptr<Node> left, std::shared_ptr<Node> right) : left(left), right(right) {}
-		virtual std::shared_ptr<NFA> compile()
+		virtual std::shared_ptr<NFAPair> compile()
 		{
 			auto left = this->left->compile();
 			auto right = this->right->compile();
-			auto ptr = std::make_shared<NFA>();
+			auto ptr = std::make_shared<NFAPair>();
 
 			ptr->start->edge = NFANode::EdgeType::EPSILON;
 			ptr->end->edge = NFANode::EdgeType::EMPTY;
@@ -160,10 +174,10 @@ namespace cre
 	public:
 
 		ClosureNode(std::shared_ptr<Node> content) : content(content) {}
-		virtual std::shared_ptr<NFA> compile()
+		virtual std::shared_ptr<NFAPair> compile()
 		{
 			auto content = this->content->compile();
-			auto ptr = std::make_shared<NFA>();
+			auto ptr = std::make_shared<NFAPair>();
 
 			ptr->start->edge = NFANode::EdgeType::EPSILON;
 			ptr->start->next = content->start;
@@ -180,59 +194,58 @@ namespace cre
 	};
 
 
-	static std::shared_ptr<Node> gen_expr(const char *&reading)
-	{
-		std::shared_ptr<Node> node = nullptr, right = nullptr;
-
-		if (*reading == '(')
-		{
-			node = gen_expr(reading);
-			if (*(reading + 1) != ')') std::cout << "missing )" << std::endl;
-			++reading;
-		}
-		else if (isalnum(*reading))
-		{
-			node = std::make_shared<LeafNode>(*reading++);
-		}
-
-		switch (*reading)
-		{
-		case '|':
-			++reading;
-			node = std::make_shared<SelectNode>(node, gen_expr(reading));
-			break;
-		case '*':
-			++reading;
-			node = std::make_shared<ClosureNode>(node);
-			break;
-		default:
-			if (isalnum(*reading) || *reading == '(') right = gen_expr(reading);
-			break;
-		}
-
-		if (right != nullptr) return std::make_shared<CatNode>(node, right);
-		return node;
-	}
-
-	static std::shared_ptr<Node> get_node(const char *pattern)
-	{
-		return gen_expr(pattern);
-	}
-
-
 	class Pattern
 	{
 	private:
 
-		std::shared_ptr<NFA> nfa;
+		std::shared_ptr<Node> gen_node(const char *&reading)
+		{
+			std::shared_ptr<Node> node = nullptr, right = nullptr;
+
+			if (*reading == '(')
+			{
+				node = gen_node(reading);
+				if (*(reading + 1) != ')') std::cout << "missing )" << std::endl;
+				++reading;
+			}
+			else if (isalnum(*reading))
+			{
+				node = std::make_shared<LeafNode>(*reading++);
+			}
+
+			switch (*reading)
+			{
+			case '|':
+				++reading;
+				node = std::make_shared<SelectNode>(node, gen_node(reading));
+				break;
+			case '*':
+				++reading;
+				node = std::make_shared<ClosureNode>(node);
+				break;
+			default:
+				if (isalnum(*reading) || *reading == '(') right = gen_node(reading);
+				break;
+			}
+
+			if (right != nullptr) return std::make_shared<CatNode>(node, right);
+			return node;
+		}
+
+		std::shared_ptr<DFA> dfa;
 
 	public:
 
-		Pattern(const char *pattern) : nfa(get_node(pattern)->compile()) {}
-		Pattern(const std::string &pattern) : nfa(get_node(pattern.c_str())->compile()) {}
+		Pattern(const char *pattern) : dfa(gen_node(pattern)->compile()->to_dfa()) {}
+		Pattern(const std::string &pattern) 
+		{
+			auto reading = pattern.c_str();
+			dfa = gen_node(reading)->compile()->to_dfa();
+		}
 
 		int match(const char *str)
 		{
+			/*
 			auto reading = str;
 			auto state = nfa->start;
 			while (*reading) 
@@ -243,11 +256,13 @@ namespace cre
 				++reading;
 			}
 			if (state == nfa->end) return 0;
+			*/
 			return 1;
 		}
 
 		int match(const std::string &str)
 		{
+			/*
 			auto reading = str.c_str();
 			auto state = nfa->start;
 			while (*reading)
@@ -258,6 +273,7 @@ namespace cre
 				++reading;
 			}
 			if (state == nfa->end) return 0;
+			*/
 			return 1;
 		}
 
