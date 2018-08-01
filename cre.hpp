@@ -67,9 +67,9 @@ namespace cre
         } state_type;
         
         std::unordered_map<char, std::shared_ptr<DFAState>> to;
-        std::vector<std::shared_ptr<NFAState>> q;
 
-        DFAState(std::shared_ptr<NFAState> q) : q(q) {}
+        DFAState() : state_type(StateType::NORMAL) {}
+        DFAState(StateType type) : state_type(type) {}
 
     };
 
@@ -101,7 +101,22 @@ namespace cre
 
         std::vector<std::shared_ptr<NFAState>> delta(std::vector<std::shared_ptr<NFAState>> q, char c)
         {
-            return {};
+            std::function<void(std::vector<std::shared_ptr<NFAState>>&, std::shared_ptr<NFAState>, char)> add2rq;
+            add2rq = [](std::vector<std::shared_ptr<NFAState>>& rq, std::shared_ptr<NFAState> s, char c) 
+            {
+                rq.push_back(s);
+                if (s->edge_type == NFAState::EdgeType::CCL && std::find(s->input_set.begin(), s->input_set.end(), c) != s->input_set.end())
+                {
+                    add2rq(rq, s->next);
+                }
+            };
+
+            std::vector<std::shared_ptr<NFAState>> rq;
+            for (auto s: q)
+            {
+                add2rq(rq, s, c);
+            }
+            return rq;
         }
 
 	public:
@@ -112,13 +127,14 @@ namespace cre
 		NFAPair() : start(std::make_shared<NFAState>()), end(std::make_shared<NFAState>()) {}
 		NFAPair(std::shared_ptr<NFAState> start, std::shared_ptr<NFAState> end) : start(start), end(end) {}
 
-		std::shared_ptr<DFAState> to_DFAState()
+		std::shared_ptr<DFAState> to_dfa()
 		{
-            auto ptr = std::make_shared<DFAState>();
             std::unordered_map<int, std::shared_ptr<DFAState>> mp;
 
-            ptr->q = eps_closure({start});
-            std::vector<std::vector<std::shared_ptr<NFAState>>> Q = {ptr->q};
+            auto q0 = eps_closure({start});
+            auto ptr = std::make_shared<DFAState>((std::find(q0.begin(), q0.end(), end) != q0.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL);
+
+            std::vector<std::vector<std::shared_ptr<NFAState>>> Q = {q};
             auto work_list = Q;
             mp[0] = ptr;
 
@@ -133,17 +149,21 @@ namespace cre
                     {
                         if (Q[i] == q) 
                         {
-                            int j = 0;
-                            for (; j < Q.size(); ++j)
+                            int j = -1;
+
+                            while (++j < Q.size())
                             {
-                                if (Q[j] == t) mp[i]->to[c] = mp[j];
+                                if (Q[j] == t) 
+                                {
+                                    mp[i]->to[c] = mp[j];
+                                    break;
+                                }
                             }
+
                             if (j == Q.size()) 
                             {
-                                Q.push_back(t);
-                                work_list.push_back(t);
-                                mp[mp.size()] = std::make_shared<DFAState>(t);
-                                mp[i]->to[c] = mp[mp.size()-1];
+                                Q.push_back(t); work_list.push_back(t);
+                                mp[i]->to[c] = mp[mp.size()] = std::make_shared<DFAState>((std::find(t.begin(), t.end(), end) != t.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL);
                             }
                         }
                     }
@@ -311,79 +331,67 @@ namespace cre
 			return node;
 		}
 
-		std::shared_ptr<DFAState> DFAState;
+		std::shared_ptr<DFAState> dfa;
 
 	public:
 
-		Pattern(const char *pattern) : DFAState(gen_node(pattern)->compile()->to_DFAState()) {}
+		Pattern(const char *pattern) : dfa(gen_node(pattern)->compile()->to_dfa()) {}
 		Pattern(const std::string &pattern) 
 		{
 			auto reading = pattern.c_str();
-			DFAState = gen_node(reading)->compile()->to_DFAState();
+			dfa = gen_node(reading)->compile()->to_dfa();
 		}
 
 		int match(const char *str)
 		{
-			/*
-			auto reading = str;
-			auto state = nfa->start;
-			while (*reading) 
-			{
-				if (state == nfa->end) break;
-				else if (std::find(state->input_set.begin(), state->input_set.end(), *reading) == state->input_set.end()) break;
-				else state = state->next;
-				++reading;
-			}
-			if (state == nfa->end) return 0;
-			*/
+            auto reading = str;
+            auto state = dfa;
+            while (*reading) 
+            {
+                if (state->to.find(*reading) != state->to.end()) state = state->to[*reading];
+                else return state->state_type != DFAState::StateType::END;
+                if (state->state_type == DFAState::StateType::END) return 0;
+                ++reading;
+            }
 			return 1;
 		}
 
 		int match(const std::string &str)
 		{
-			/*
 			auto reading = str.c_str();
-			auto state = nfa->start;
-			while (*reading)
-			{
-				if (state == nfa->end) break;
-				else if (std::find(state->input_set.begin(), state->input_set.end(), *reading) == state->input_set.end()) break;
-				else state = state->next;
-				++reading;
-			}
-			if (state == nfa->end) return 0;
-			*/
+            auto state = dfa;
+            while (*reading) 
+            {
+                if (state->to.find(*reading) != state->to.end()) state = state->to[*reading];
+                else return state->state_type != DFAState::StateType::END;
+                if (state->state_type == DFAState::StateType::END) return 0;
+                ++reading;
+            }
 			return 1;
 		}
 
-	};
+    };
+    
 
+    int match(const char *pattern, const char *str)
+    {
+        return Pattern(pattern).match(str);
+    }
 
-	class Cre
-	{
-	public:
+    int match(const std::string &pattern, const char *str)
+    {
+        return Pattern(pattern).match(str);
+    }
 
-		static int match(const char *pattern, const char *str)
-		{
-			return Pattern(pattern).match(str);
-		}
+    int match(const char *pattern, const std::string &str)
+    {
+        return Pattern(pattern).match(str);
+    }
 
-		static int match(const std::string &pattern, const char *str)
-		{
-			return Pattern(pattern).match(str);
-		}
-
-		static int match(const char *pattern, const std::string &str)
-		{
-			return Pattern(pattern).match(str);
-		}
-
-		static int match(const std::string &pattern, const std::string &str)
-		{
-			return Pattern(pattern).match(str);
-		}
-
-	};
+    int match(const std::string &pattern, const std::string &str)
+    {
+        return Pattern(pattern).match(str);
+    }
 
 }
 
