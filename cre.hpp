@@ -6,6 +6,8 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include <functional>
+#include <unordered_map>
 #include <cstring>
 
 
@@ -34,15 +36,7 @@ closuretail
 namespace cre
 {
 
-	class DFA
-	{
-	public:
-
-
-	};
-
-
-	class NFANode
+	class NFAState
 	{
 	public:
 		
@@ -51,28 +45,113 @@ namespace cre
 			EPSILON,
 			CCL,
 			EMPTY
-		} edge;
-		std::vector<int> inputSet;
-		std::shared_ptr<NFANode> next;
-		std::shared_ptr<NFANode> next2;
+        } edge_type;
+        
+		std::vector<int> input_set;
+		std::shared_ptr<NFAState> next;
+		std::shared_ptr<NFAState> next2;
 
-		NFANode() : next(nullptr), next2(nullptr) {}
+		NFAState() : next(nullptr), next2(nullptr) {}
 
 	};
+    
+
+    class DFAState
+    {
+    public:
+        
+        enum class StateType
+        {
+            NORMAL,
+            END
+        } state_type;
+        
+        std::unordered_map<char, std::shared_ptr<DFAState>> to;
+        std::vector<std::shared_ptr<NFAState>> q;
+
+        DFAState(std::shared_ptr<NFAState> q) : q(q) {}
+
+    };
+
 
 	class NFAPair
 	{
+    private:
+
+        std::vector<std::shared_ptr<NFAState>> eps_closure(std::vector<std::shared_ptr<NFAState>> S)
+        {
+            std::function<void(std::vector<std::shared_ptr<NFAState>>&, std::shared_ptr<NFAState>)> add2rS;
+            add2rS = [](std::vector<std::shared_ptr<NFAState>>& S, std::shared_ptr<NFAState> s) 
+            {
+                S.push_back(s);
+                if (s->edge_type == NFAState::EdgeType::EPSILON) 
+                {
+                    add2S(rS, s->next);
+                    if (s->next2 != nullptr) add2S(rS, s->next2);
+                }
+            };
+
+            std::vector<std::shared_ptr<NFAState>> rS;
+            for (auto s: S) 
+            {
+                add2rS(rS, s);
+            }
+            return rS;
+        }
+
+        std::vector<std::shared_ptr<NFAState>> delta(std::vector<std::shared_ptr<NFAState>> q, char c)
+        {
+            return {};
+        }
+
 	public:
 
-		std::shared_ptr<NFANode> start;
-		std::shared_ptr<NFANode> end;
+		std::shared_ptr<NFAState> start;
+		std::shared_ptr<NFAState> end;
 
-		NFAPair() : start(std::make_shared<NFANode>()), end(std::make_shared<NFANode>()) {}
-		NFAPair(std::shared_ptr<NFANode> start, std::shared_ptr<NFANode> end) : start(start), end(end) {}
+		NFAPair() : start(std::make_shared<NFAState>()), end(std::make_shared<NFAState>()) {}
+		NFAPair(std::shared_ptr<NFAState> start, std::shared_ptr<NFAState> end) : start(start), end(end) {}
 
-		std::shared_ptr<DFA> to_dfa()
+		std::shared_ptr<DFAState> to_DFAState()
 		{
-			return nullptr;
+            auto ptr = std::make_shared<DFAState>();
+            std::unordered_map<int, std::shared_ptr<DFAState>> mp;
+
+            ptr->q = eps_closure({start});
+            std::vector<std::vector<std::shared_ptr<NFAState>>> Q = {ptr->q};
+            auto work_list = Q;
+            mp[0] = ptr;
+
+            while (!work_list.empty()) 
+            {
+                auto q = work_list.back();
+                work_list.pop_back();
+                for (char c = 0; c < 128; ++c) 
+                {
+                    auto t = eps_closure(delta(q, c));
+                    for (int i = 0; i < Q.size(); ++i) 
+                    {
+                        if (Q[i] == q) 
+                        {
+                            int j = 0;
+                            for (; j < Q.size(); ++j)
+                            {
+                                if (Q[j] == t) mp[i]->to[c] = mp[j];
+                            }
+                            if (j == Q.size()) 
+                            {
+                                Q.push_back(t);
+                                work_list.push_back(t);
+                                mp[mp.size()] = std::make_shared<DFAState>(t);
+                                mp[i]->to[c] = mp[mp.size()-1];
+                            }
+                        }
+                    }
+
+                }
+            }
+
+            return ptr;
 		}
 
 	};
@@ -100,9 +179,9 @@ namespace cre
 		{
 			auto ptr = std::make_shared<NFAPair>();
 
-			ptr->start->edge = NFANode::EdgeType::CCL;
-			ptr->end->edge = NFANode::EdgeType::EMPTY;
-			ptr->start->inputSet.push_back(leaf);
+			ptr->start->edge_type = NFAState::EdgeType::CCL;
+			ptr->end->edge_type = NFAState::EdgeType::EMPTY;
+			ptr->start->input_set.push_back(leaf);
 			ptr->start->next = ptr->end;
 
 			return ptr;
@@ -126,7 +205,7 @@ namespace cre
 			auto right = this->right->compile();
 			auto ptr = std::make_shared<NFAPair>(left->start, right->end);
 
-			left->end->edge = NFANode::EdgeType::EPSILON;
+			left->end->edge_type = NFAState::EdgeType::EPSILON;
 			left->end->next = right->start;
 
 			return ptr;
@@ -150,13 +229,13 @@ namespace cre
 			auto right = this->right->compile();
 			auto ptr = std::make_shared<NFAPair>();
 
-			ptr->start->edge = NFANode::EdgeType::EPSILON;
-			ptr->end->edge = NFANode::EdgeType::EMPTY;
+			ptr->start->edge_type = NFAState::EdgeType::EPSILON;
+			ptr->end->edge_type = NFAState::EdgeType::EMPTY;
 			ptr->start->next = left->start;
 			ptr->start->next2 = right->start;
 			
-			left->end->edge = NFANode::EdgeType::EPSILON;
-			right->end->edge = NFANode::EdgeType::EPSILON;
+			left->end->edge_type = NFAState::EdgeType::EPSILON;
+			right->end->edge_type = NFAState::EdgeType::EPSILON;
 			left->end->next = ptr->end;
 			right->end->next = ptr->end;
 
@@ -179,12 +258,12 @@ namespace cre
 			auto content = this->content->compile();
 			auto ptr = std::make_shared<NFAPair>();
 
-			ptr->start->edge = NFANode::EdgeType::EPSILON;
+			ptr->start->edge_type = NFAState::EdgeType::EPSILON;
 			ptr->start->next = content->start;
 			ptr->start->next2 = ptr->end;
-			ptr->end->edge = NFANode::EdgeType::EMPTY;
+			ptr->end->edge_type = NFAState::EdgeType::EMPTY;
 			
-			content->end->edge = NFANode::EdgeType::EPSILON;
+			content->end->edge_type = NFAState::EdgeType::EPSILON;
 			content->end->next = content->start;
 			content->end->next2 = ptr->end;
 
@@ -232,15 +311,15 @@ namespace cre
 			return node;
 		}
 
-		std::shared_ptr<DFA> dfa;
+		std::shared_ptr<DFAState> DFAState;
 
 	public:
 
-		Pattern(const char *pattern) : dfa(gen_node(pattern)->compile()->to_dfa()) {}
+		Pattern(const char *pattern) : DFAState(gen_node(pattern)->compile()->to_DFAState()) {}
 		Pattern(const std::string &pattern) 
 		{
 			auto reading = pattern.c_str();
-			dfa = gen_node(reading)->compile()->to_dfa();
+			DFAState = gen_node(reading)->compile()->to_DFAState();
 		}
 
 		int match(const char *str)
@@ -251,7 +330,7 @@ namespace cre
 			while (*reading) 
 			{
 				if (state == nfa->end) break;
-				else if (std::find(state->inputSet.begin(), state->inputSet.end(), *reading) == state->inputSet.end()) break;
+				else if (std::find(state->input_set.begin(), state->input_set.end(), *reading) == state->input_set.end()) break;
 				else state = state->next;
 				++reading;
 			}
@@ -268,7 +347,7 @@ namespace cre
 			while (*reading)
 			{
 				if (state == nfa->end) break;
-				else if (std::find(state->inputSet.begin(), state->inputSet.end(), *reading) == state->inputSet.end()) break;
+				else if (std::find(state->input_set.begin(), state->input_set.end(), *reading) == state->input_set.end()) break;
 				else state = state->next;
 				++reading;
 			}
