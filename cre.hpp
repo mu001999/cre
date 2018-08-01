@@ -81,13 +81,13 @@ namespace cre
         std::vector<std::shared_ptr<NFAState>> eps_closure(std::vector<std::shared_ptr<NFAState>> S)
         {
             std::function<void(std::vector<std::shared_ptr<NFAState>>&, std::shared_ptr<NFAState>)> add2rS;
-            add2rS = [](std::vector<std::shared_ptr<NFAState>>& S, std::shared_ptr<NFAState> s) 
+            add2rS = [&](std::vector<std::shared_ptr<NFAState>> &S, std::shared_ptr<NFAState> s) 
             {
                 S.push_back(s);
                 if (s->edge_type == NFAState::EdgeType::EPSILON) 
                 {
-                    add2S(rS, s->next);
-                    if (s->next2 != nullptr) add2S(rS, s->next2);
+                    add2rS(S, s->next);
+                    if (s->next2 != nullptr) add2rS(S, s->next2);
                 }
             };
 
@@ -101,20 +101,13 @@ namespace cre
 
         std::vector<std::shared_ptr<NFAState>> delta(std::vector<std::shared_ptr<NFAState>> q, char c)
         {
-            std::function<void(std::vector<std::shared_ptr<NFAState>>&, std::shared_ptr<NFAState>, char)> add2rq;
-            add2rq = [](std::vector<std::shared_ptr<NFAState>>& rq, std::shared_ptr<NFAState> s, char c) 
-            {
-                rq.push_back(s);
-                if (s->edge_type == NFAState::EdgeType::CCL && std::find(s->input_set.begin(), s->input_set.end(), c) != s->input_set.end())
-                {
-                    add2rq(rq, s->next);
-                }
-            };
-
             std::vector<std::shared_ptr<NFAState>> rq;
             for (auto s: q)
             {
-                add2rq(rq, s, c);
+                if (s->edge_type == NFAState::EdgeType::CCL && std::find(s->input_set.begin(), s->input_set.end(), c) != s->input_set.end())
+                {
+                    rq.push_back(s->next);
+                }
             }
             return rq;
         }
@@ -134,7 +127,7 @@ namespace cre
             auto q0 = eps_closure({start});
             auto ptr = std::make_shared<DFAState>((std::find(q0.begin(), q0.end(), end) != q0.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL);
 
-            std::vector<std::vector<std::shared_ptr<NFAState>>> Q = {q};
+            std::vector<std::vector<std::shared_ptr<NFAState>>> Q = {q0};
             auto work_list = Q;
             mp[0] = ptr;
 
@@ -142,9 +135,10 @@ namespace cre
             {
                 auto q = work_list.back();
                 work_list.pop_back();
-                for (char c = 0; c < 128; ++c) 
+                for (char c = static_cast<char>(0); c >= 0; ++c) 
                 {
                     auto t = eps_closure(delta(q, c));
+                    if (t.empty()) continue;
                     for (int i = 0; i < Q.size(); ++i) 
                     {
                         if (Q[i] == q) 
@@ -165,9 +159,10 @@ namespace cre
                                 Q.push_back(t); work_list.push_back(t);
                                 mp[i]->to[c] = mp[mp.size()] = std::make_shared<DFAState>((std::find(t.begin(), t.end(), end) != t.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL);
                             }
+
+                            break;
                         }
                     }
-
                 }
             }
 
@@ -202,8 +197,8 @@ namespace cre
 			ptr->start->edge_type = NFAState::EdgeType::CCL;
 			ptr->end->edge_type = NFAState::EdgeType::EMPTY;
 			ptr->start->input_set.push_back(leaf);
-			ptr->start->next = ptr->end;
-
+            ptr->start->next = ptr->end;
+            
 			return ptr;
 		}
 
@@ -335,7 +330,7 @@ namespace cre
 
 	public:
 
-		Pattern(const char *pattern) : dfa(gen_node(pattern)->compile()->to_dfa()) {}
+        Pattern(const char *pattern) : dfa(gen_node(pattern)->compile()->to_dfa()) {}
 		Pattern(const std::string &pattern) 
 		{
 			auto reading = pattern.c_str();
@@ -349,11 +344,11 @@ namespace cre
             while (*reading) 
             {
                 if (state->to.find(*reading) != state->to.end()) state = state->to[*reading];
-                else return state->state_type != DFAState::StateType::END;
+                else break;
                 if (state->state_type == DFAState::StateType::END) return 0;
                 ++reading;
             }
-			return 1;
+			return state->state_type != DFAState::StateType::END;
 		}
 
 		int match(const std::string &str)
@@ -363,11 +358,11 @@ namespace cre
             while (*reading) 
             {
                 if (state->to.find(*reading) != state->to.end()) state = state->to[*reading];
-                else return state->state_type != DFAState::StateType::END;
+                else break;
                 if (state->state_type == DFAState::StateType::END) return 0;
                 ++reading;
             }
-			return 1;
+			return state->state_type != DFAState::StateType::END;
 		}
 
     };
