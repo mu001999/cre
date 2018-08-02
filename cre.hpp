@@ -19,7 +19,7 @@ expr
 	;
 
 character
-	: [a-zA-Z0-9]
+	: ASCII CODE
 	;
 
 selecttail
@@ -298,6 +298,7 @@ namespace cre
 
 			if (*reading == '(')
 			{
+				++reading;
 				node = gen_node(reading);
 				if (*(reading + 1) != ')') std::cout << "missing )" << std::endl;
 				++reading;
@@ -307,22 +308,51 @@ namespace cre
 				node = std::make_shared<LeafNode>(*reading++);
 			}
 
+			if (node == nullptr) 
+			{
+				std::cout << "syntax error" << std::endl;
+				exit(0);
+			}
+
+			while (*reading == '(' || isalnum(*reading))
+			{
+				if (*reading == '(')
+				{
+					++reading;
+					if (right != nullptr) 
+					{
+						node = std::make_shared<CatNode>(node, right);
+					}
+					right = gen_node(reading);
+					if (*(reading + 1) != ')') std::cout << "missing )" << std::endl;
+					++reading;
+				}
+				else
+				{
+					if (right != nullptr)
+					{
+						node = std::make_shared<CatNode>(node, right);
+					}
+					right = std::make_shared<LeafNode>(*reading++);
+				}
+			}
+
 			switch (*reading)
 			{
 			case '|':
 				++reading;
+				if (right != nullptr) node = std::make_shared<CatNode>(node, right);
 				node = std::make_shared<SelectNode>(node, gen_node(reading));
 				break;
 			case '*':
 				++reading;
-				node = std::make_shared<ClosureNode>(node);
+				if (right != nullptr) node = std::make_shared<CatNode>(node, std::make_shared<ClosureNode>(right));
+				else node = std::make_shared<ClosureNode>(node);
 				break;
 			default:
-				if (isalnum(*reading) || *reading == '(') right = gen_node(reading);
 				break;
 			}
-
-			if (right != nullptr) return std::make_shared<CatNode>(node, right);
+			
 			return node;
 		}
 
