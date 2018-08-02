@@ -2,4 +2,4 @@
 CommonRegEx
 
 ### TODO
-* Improve the data structure of nfa
+* complete dfa minimization
