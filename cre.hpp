@@ -186,14 +186,14 @@ namespace cre
 			std::shared_ptr<DFAState> start = nullptr;
 
 			{
-				std::vector<std::set<int>> _P;
-				for (auto &p: P) _P.push_back(p);
+				std::vector<std::set<int>> P;
+				for (auto &t: T) P.push_back(t);
 
 				auto indexof_inp = [&](std::shared_ptr<DFAState> state)
 				{
-					for (int i = 0; i < _P.size(); ++i)
+					for (int i = 0; i < P.size(); ++i)
 					{
-						if (_P[i].count(indexof_inmp(state)))
+						if (P[i].count(indexof_inmp(state)))
 						{
 							return i;
 						}
@@ -201,9 +201,9 @@ namespace cre
 					return -1;
 				};
 
-				for (int i = 0; i < _P.size(); ++i)
+				for (int i = 0; i < P.size(); ++i)
 				{
-					for (auto &k: _P[i])
+					for (auto &k: P[i])
 					{
 						if (mp[k]->state_type == DFAState::StateType::END)
 						{
@@ -215,7 +215,7 @@ namespace cre
 							states[i]->to[it.first] = states[indexof_inp(it.second)];
 						}
 					}
-					if (_P[i].count(0)) start = states[i];
+					if (P[i].count(0)) start = states[i];
 				}
 			}
 
