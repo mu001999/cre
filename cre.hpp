@@ -1,14 +1,14 @@
 #ifndef _CRE_H_
 #define _CRE_H_
 
-#include <iostream>
+#include <set>
 #include <string>
 #include <vector>
 #include <memory>
+#include <iostream>
 #include <algorithm>
 #include <functional>
 #include <unordered_map>
-#include <cstring>
 
 
 /* grammar
@@ -35,7 +35,7 @@ closuretail
 
 namespace cre
 {
-
+	
 	class NFAState
 	{
 	public:
@@ -112,9 +112,113 @@ namespace cre
             return rq;
 		}
 		
-		std::shared_ptr<DFAState> dfa_minimization(std::unordered_map<int, std::shared_ptr<DFAState>> &mp)
+		std::shared_ptr<DFAState> dfa_minimization(std::vector<std::shared_ptr<DFAState>> &mp)
 		{
-			return mp[0];
+			std::set<std::set<int>> T;
+			auto P = T;
+
+			auto indexof_inmp = [&](std::shared_ptr<DFAState> state)
+			{
+				for (int i = 0; i < mp.size(); ++i) if (mp[i] == state) return i;
+				return -1;
+			};
+
+			{
+				std::vector<std::set<int>> _T = {{}, {}};
+				for (int i = 0; i < mp.size(); ++i)
+				{
+					_T[mp[i]->state_type == DFAState::StateType::END].insert(i);
+				}
+				T.insert(_T[0]); T.insert(_T[1]);
+			}
+
+			auto split = [&](const std::set<int> &S)
+			{
+				std::vector<std::set<int>> res = {S};
+				for (char c = static_cast<char>(0); c >= 0; ++c) 
+				{
+					std::set<int> s1, s2;
+					auto flag_it = P.end();
+					for (auto i: S)
+					{
+						if (mp[i]->to.count(c))
+						{
+							int k = indexof_inmp(mp[i]->to[c]);
+							for (auto it = P.begin(); it != P.end(); ++it)
+							{
+								if (it->count(k)) 
+								{
+									if (flag_it == P.end())
+									{
+										flag_it = it;
+										s1.insert(i);
+									}
+									else s2.insert(i);
+									break;
+								}
+							}
+						}
+						else s2.insert(i);
+					}
+
+					if (s1.size() && s2.size()) 
+					{
+						res = {s1, s2};
+						return res;
+					}
+				}
+				return res;
+			};
+
+			while (P != T)
+			{
+				P = T; T.clear();
+				for (auto &p: P)
+				{
+					for (auto &_p: split(p)) 
+					{
+						T.insert(_p);
+					}
+				}
+			}
+
+			std::vector<std::shared_ptr<DFAState>> states(P.size(), std::make_shared<DFAState>());
+			std::shared_ptr<DFAState> start = nullptr;
+
+			{
+				std::vector<std::set<int>> P(P.begin(), P.end());
+				auto indexof_inp = [&](std::shared_ptr<DFAState> state)
+				{
+					for (int i = 0; i < P.size(); ++i)
+					{
+						if (P[i].count(indexof_inmp(state)))
+						{
+							return i;
+						}
+					}
+					return -1;
+				};
+
+				for (int i = 0; i < P.size(); ++i)
+				{
+					for (auto &k: P[i])
+					{
+						if (mp[k]->state_type == DFAState::StateType::END)
+						{
+							states[i]->state_type = DFAState::StateType::END;
+							break;
+						}
+
+						for (auto it: mp[k]->to)
+						{
+							states[i]->to[it.first] = states[indexof_inp(it.second)];
+						}
+					}
+					if (P[i].count(0)) start = states[i];
+				}
+			}
+
+			return start;
 		}
 
 	public:
@@ -130,9 +234,7 @@ namespace cre
 			auto q0 = eps_closure({start});
 			std::vector<std::vector<std::shared_ptr<NFAState>>> Q = {q0};
 			auto work_list = Q;
-			
-            std::unordered_map<int, std::shared_ptr<DFAState>> mp;
-            mp[0] = std::make_shared<DFAState>((std::find(q0.begin(), q0.end(), end) != q0.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL);
+            std::vector<std::shared_ptr<DFAState>> mp = { std::make_shared<DFAState>((std::find(q0.begin(), q0.end(), end) != q0.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL)};
 
             while (!work_list.empty()) 
             {
@@ -159,8 +261,10 @@ namespace cre
 
                             if (j == Q.size()) 
                             {
-                                Q.push_back(t); work_list.push_back(t);
-                                mp[i]->to[c] = mp[mp.size()] = std::make_shared<DFAState>((std::find(t.begin(), t.end(), end) != t.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL);
+								Q.push_back(t); 
+								work_list.push_back(t); 
+								mp.push_back(std::make_shared<DFAState>((std::find(t.begin(), t.end(), end) != t.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL));
+                                mp[i]->to[c] = mp.back();
                             }
 
                             break;
@@ -381,7 +485,7 @@ namespace cre
             auto state = dfa;
             while (*reading) 
             {
-                if (state->to.find(*reading) != state->to.end()) state = state->to[*reading];
+                if (state->to.count(*reading)) state = state->to[*reading];
                 else break;
                 if (state->state_type == DFAState::StateType::END) return 0;
                 ++reading;
@@ -395,7 +499,7 @@ namespace cre
             auto state = dfa;
             while (*reading) 
             {
-                if (state->to.find(*reading) != state->to.end()) state = state->to[*reading];
+                if (state->to.count(*reading)) state = state->to[*reading];
                 else break;
                 if (state->state_type == DFAState::StateType::END) return 0;
                 ++reading;

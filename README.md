@@ -2,5 +2,5 @@
 CommonRegEx
 
 ### TODO
-* complete dfa minimization
+* Optimize redundant calculations
 * fix bugs
