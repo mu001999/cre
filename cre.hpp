@@ -2,6 +2,7 @@
 #define _CRE_H_
 
 #include <set>
+#include <cstdio>
 #include <string>
 #include <vector>
 #include <memory>
@@ -146,9 +147,13 @@ namespace cre
 							int k = indexof_inmp(mp[i]->to[c]);
 							for (auto it = P.begin(); it != P.end(); ++it)
 							{
-								if (it->count(k)) 
+								if (it->count(k))
 								{
-									if (flag_it == P.end())
+									if (it == flag_it)
+									{
+										s1.insert(i);
+									}
+									else if (flag_it == P.end() && it->count(i) == 0)
 									{
 										flag_it = it;
 										s1.insert(i);
@@ -182,7 +187,8 @@ namespace cre
 				}
 			}
 
-			std::vector<std::shared_ptr<DFAState>> states(P.size(), std::make_shared<DFAState>());
+			std::vector<std::shared_ptr<DFAState>> states(T.size(), nullptr);
+			for (auto &state: states) state = std::make_shared<DFAState>();
 			std::shared_ptr<DFAState> start = nullptr;
 
 			{
@@ -191,9 +197,9 @@ namespace cre
 
 				auto indexof_inp = [&](std::shared_ptr<DFAState> state)
 				{
-					for (int i = 0; i < P.size(); ++i)
+					for (int i = 0, k = indexof_inmp(state); i < P.size(); ++i)
 					{
-						if (P[i].count(indexof_inmp(state)))
+						if (P[i].count(k))
 						{
 							return i;
 						}
@@ -210,15 +216,33 @@ namespace cre
 							states[i]->state_type = DFAState::StateType::END;
 						}
 
+						if (k == 0) start = states[i];
+
 						for (auto it: mp[k]->to)
 						{
 							states[i]->to[it.first] = states[indexof_inp(it.second)];
 						}
 					}
-					if (P[i].count(0)) start = states[i];
 				}
-			}
 
+				/* show the final dfa
+				auto indexof_instates = [&](std::shared_ptr<DFAState> state)
+				{
+					for (int i = 0; i < states.size(); ++i) if (states[i] == state) return i;
+					return -1;
+				};
+				for (int i = 0; i < states.size(); ++i)
+				{
+					printf("d%d\t", i);
+					for (auto it: states[i]->to)
+					{
+						printf("%c->d%d\t", it.first, indexof_instates(it.second));
+					}
+					printf("\n");
+				}
+				*/
+
+			}
 			return start;
 		}
 
@@ -272,8 +296,8 @@ namespace cre
                         }
                     }
                 }
-            }
-
+			}
+			
             return dfa_minimization(mp);
 		}
 
