@@ -110,7 +110,12 @@ namespace cre
                 }
             }
             return rq;
-        }
+		}
+		
+		std::shared_ptr<DFAState> dfa_minimization(std::unordered_map<int, std::shared_ptr<DFAState>> &mp)
+		{
+			return mp[0];
+		}
 
 	public:
 
@@ -122,14 +127,12 @@ namespace cre
 
 		std::shared_ptr<DFAState> to_dfa()
 		{
+			auto q0 = eps_closure({start});
+			std::vector<std::vector<std::shared_ptr<NFAState>>> Q = {q0};
+			auto work_list = Q;
+			
             std::unordered_map<int, std::shared_ptr<DFAState>> mp;
-
-            auto q0 = eps_closure({start});
-            auto ptr = std::make_shared<DFAState>((std::find(q0.begin(), q0.end(), end) != q0.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL);
-
-            std::vector<std::vector<std::shared_ptr<NFAState>>> Q = {q0};
-            auto work_list = Q;
-            mp[0] = ptr;
+            mp[0] = std::make_shared<DFAState>((std::find(q0.begin(), q0.end(), end) != q0.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL);
 
             while (!work_list.empty()) 
             {
@@ -166,7 +169,7 @@ namespace cre
                 }
             }
 
-            return ptr;
+            return dfa_minimization(mp);
 		}
 
 	};
