@@ -469,6 +469,16 @@ namespace cre
 					else node = std::make_shared<ClosureNode>(node);
 					++reading;
 				}
+				else if (*reading == '+')
+				{
+					if (right != nullptr)
+					{
+						node = std::make_shared<CatNode>(node, std::make_shared<CatNode>(right, std::make_shared<ClosureNode>(right)));
+						right = nullptr;
+					}
+					else node = std::make_shared<CatNode>(node, std::make_shared<ClosureNode>(node));
+					++reading;
+				}
 				else
 				{
 					if (right != nullptr)
