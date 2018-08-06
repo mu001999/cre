@@ -1,5 +1,4 @@
-# commonregex
-CommonRegEx
+CommonRegEx, single-file
 
 ### TODO
 * Optimize redundant calculations
