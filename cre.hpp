@@ -442,8 +442,7 @@ namespace cre
 
 			if (node == nullptr) 
 			{
-				std::cout << "syntax error" << std::endl;
-				exit(0);
+				return node;
 			}
 
 			while (*reading == '(' || isalnum(*reading) || *reading == '*')
@@ -507,12 +506,21 @@ namespace cre
 
 	public:
 
-        Pattern(const char *pattern) : dfa(gen_node(pattern)->compile()->to_dfa()) {}
+		Pattern(const char *pattern)
+		{
+			auto node = gen_node(pattern);
+			if (node == nullptr) dfa = std::make_shared<DFAState>(DFAState::StateType::END);
+			else dfa = node->compile()->to_dfa();
+		}
+
 		Pattern(const std::string &pattern) 
 		{
 			auto reading = pattern.c_str();
-			dfa = gen_node(reading)->compile()->to_dfa();
+			auto node = gen_node(reading);
+			if (node == nullptr) dfa = std::make_shared<DFAState>(DFAState::StateType::END);
+			else dfa = node->compile()->to_dfa();
 		}
+
 
 		int match(const char *str)
 		{

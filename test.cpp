@@ -3,9 +3,17 @@
 #include <cassert>
 #include "cre.hpp"
 
+
 using namespace std;
 
-int main(int argc, char *argv[])
+
+void test_blank()
+{
+	assert(cre::match("", "") == 0);
+	assert(cre::match("", "abcdefg") == 0);
+}
+
+void test_single_character()
 {
 	assert(cre::match("a", "a") == 0);
 	assert(cre::match("a", "b") == 1);
@@ -19,8 +27,19 @@ int main(int argc, char *argv[])
 	assert(cre::match("0", "1") == 1);
 	assert(cre::match("9", "9") == 0);
 	assert(cre::match("9", "8") == 1);
+}
 
+void test_concatenate_characters()
+{
 	assert(cre::match("ab", "ab") == 0);
+}
+
+
+int main(int argc, char *argv[])
+{
+	test_blank();
+	test_single_character();
+	test_concatenate_characters();
 
 	assert(cre::match("a|b", "a") == 0);
 	assert(cre::match("a|b", "b") == 0);
