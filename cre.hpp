@@ -30,6 +30,7 @@ selecttail
 
 closuretail
 	: * expr
+	: + expr
 	;
 */
 
