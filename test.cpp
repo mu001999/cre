@@ -29,24 +29,22 @@ void test_single_character()
 	assert(cre::match("9", "8") == 1);
 }
 
-void test_concatenate_characters()
+void test_concatenate()
 {
 	assert(cre::match("ab", "ab") == 0);
+	assert(cre::match("ab", "ac") == 1);
 }
 
-
-int main(int argc, char *argv[])
+void test_select()
 {
-	test_blank();
-	test_single_character();
-	test_concatenate_characters();
-
 	assert(cre::match("a|b", "a") == 0);
 	assert(cre::match("a|b", "b") == 0);
-
 	assert(cre::match("ab|c", "ab") == 0);
 	assert(cre::match("ab|c", "c") == 0);
+}
 
+void test_closure()
+{
 	assert(cre::match("a(b|c)*", "abbbbbc") == 0);
 	assert(cre::match("a(b|c)*", "a") == 0);
 
@@ -55,6 +53,12 @@ int main(int argc, char *argv[])
 	assert(cre::match("abb*", "ab") == 0);
 	assert(cre::match("abb*", "a") == 1);
 
+	assert(cre::match("233+", "233") == 0);
+	assert(cre::match("233+", "23") == 1);
+}
+
+void test_complex()
+{
 	auto pattern = cre::Pattern("(abcdefg|123456789)*|cyyzerono1|suchangdashabi|chaoqunlaogenb|(ab*c)");
 	assert(pattern.match("abcdefgabcdefg") == 0);
 	assert(pattern.match("12345668912345") == 1);
@@ -62,9 +66,17 @@ int main(int argc, char *argv[])
 	assert(pattern.match("cvvzerono1") == 1);
 	assert(pattern.match("abbbbbbbbc") == 0);
 	assert(pattern.match("ac") == 0);
+}
 
-	assert(cre::match("233+", "233") == 0);
-	assert(cre::match("233+", "23") == 1);
+
+int main(int argc, char *argv[])
+{
+	test_blank();
+	test_single_character();
+	test_concatenate();
+	test_select();
+	test_closure();
+	test_complex();
 
 	std::cout << "test pass" << std::endl;
 
