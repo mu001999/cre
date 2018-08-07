@@ -523,53 +523,65 @@ namespace cre
 		}
 
 
-		int match(const char *str)
+		std::string match(const char *str)
 		{
+			std::string res, temp;
             auto reading = str;
             auto state = dfa;
             while (*reading) 
             {
                 if (state->to.count(*reading)) state = state->to[*reading];
-                else break;
-                if (state->state_type == DFAState::StateType::END) return 0;
+				else break;
+				temp += *reading;
+				if (state->state_type == DFAState::StateType::END) 
+				{
+					res += temp;
+					temp = "";
+				}
                 ++reading;
-            }
-			return state->state_type != DFAState::StateType::END;
+			}
+			return res;
 		}
 
-		int match(const std::string &str)
+		std::string match(const std::string &str)
 		{
+			std::string res, temp;
 			auto reading = str.c_str();
             auto state = dfa;
             while (*reading) 
             {
                 if (state->to.count(*reading)) state = state->to[*reading];
-                else break;
-                if (state->state_type == DFAState::StateType::END) return 0;
+				else break;
+				temp += *reading;
+				if (state->state_type == DFAState::StateType::END) 
+				{
+					res += temp;
+					temp = "";
+				}
                 ++reading;
-            }
-			return state->state_type != DFAState::StateType::END;
+			}
+			return res;
 		}
 
     };
     
 
-    int match(const char *pattern, const char *str)
+    std::string match(const char *pattern, const char *str)
     {
         return Pattern(pattern).match(str);
     }
 
-    int match(const std::string &pattern, const char *str)
+    std::string match(const std::string &pattern, const char *str)
     {
         return Pattern(pattern).match(str);
     }
 
-    int match(const char *pattern, const std::string &str)
+    std::string match(const char *pattern, const std::string &str)
     {
         return Pattern(pattern).match(str);
     }
 
-    int match(const std::string &pattern, const std::string &str)
+    std::string match(const std::string &pattern, const std::string &str)
     {
         return Pattern(pattern).match(str);
     }
