@@ -420,6 +420,33 @@ namespace cre
 
 	};
 
+	class QuestionMarkNode : public Node
+	{
+	private:
+
+		std::shared_ptr<Node> content;
+
+	public:
+
+		QuestionMarkNode(std::shared_ptr<Node> content) : content(content) {}
+		virtual std::shared_ptr<NFAPair> compile()
+		{
+			auto content = this->content->compile();
+			auto ptr = std::make_shared<NFAPair>();
+
+			ptr->start->edge_type = NFAState::EdgeType::EPSILON;
+			ptr->start->next = content->start;
+			ptr->start->next2 = ptr->end;
+			ptr->end->edge_type = NFAState::EdgeType::EMPTY;
+			
+			content->end->edge_type = NFAState::EdgeType::EPSILON;
+			content->end->next = ptr->end;
+
+			return ptr;
+		}
+
+	};
+
 
 	class Pattern
 	{
