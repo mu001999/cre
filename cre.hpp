@@ -473,7 +473,7 @@ namespace cre
 				return node;
 			}
 
-			while (*reading == '(' || isalnum(*reading) || *reading == '*')
+			while (*reading == '(' || isalnum(*reading) || *reading == '*' || *reading == '?')
 			{
 				if (*reading == '(')
 				{
@@ -488,23 +488,33 @@ namespace cre
 				}
 				else if (*reading == '*')
 				{
+					++reading;
 					if (right != nullptr) 
 					{
 						node = std::make_shared<CatNode>(node, std::make_shared<ClosureNode>(right));
 						right = nullptr;
 					}
 					else node = std::make_shared<ClosureNode>(node);
-					++reading;
 				}
 				else if (*reading == '+')
 				{
+					++reading;
 					if (right != nullptr)
 					{
 						node = std::make_shared<CatNode>(node, std::make_shared<CatNode>(right, std::make_shared<ClosureNode>(right)));
 						right = nullptr;
 					}
 					else node = std::make_shared<CatNode>(node, std::make_shared<ClosureNode>(node));
+				}
+				else if (*reading == '?')
+				{
 					++reading;
+					if (right != nullptr)
+					{
+						node = std::make_shared<CatNode>(node, std::make_shared<QuestionMarkNode>(right));
+						right = nullptr;
+					}
+					else node = std::make_shared<QuestionMarkNode>(node);
 				}
 				else
 				{
