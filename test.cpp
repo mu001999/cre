@@ -74,6 +74,10 @@ void test_complex()
 	assert(pattern.match("cvvzerono1") == "");
 	assert(pattern.match("abbbbbbbbc") == "abbbbbbbbc");
 	assert(pattern.match("ac") == "ac");
+	
+	pattern = cre::Pattern("((a|b|c)+(1|2|3)*0?(abc)?)+");
+	assert(pattern.match("abc1230abcdefg") == "abc1230abc");
+	assert(pattern.match("cccbbbaaadefg") == "cccbbbaaa");
 }
 
 

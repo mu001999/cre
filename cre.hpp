@@ -80,12 +80,12 @@ namespace cre
 	{
     private:
 
-        std::vector<std::shared_ptr<NFAState>> eps_closure(std::vector<std::shared_ptr<NFAState>> S)
+        std::set<std::shared_ptr<NFAState>> eps_closure(std::set<std::shared_ptr<NFAState>> S)
         {
-            std::function<void(std::vector<std::shared_ptr<NFAState>>&, std::shared_ptr<NFAState>)> add2rS;
-            add2rS = [&](std::vector<std::shared_ptr<NFAState>> &S, std::shared_ptr<NFAState> s) 
+            std::function<void(std::set<std::shared_ptr<NFAState>>&, std::shared_ptr<NFAState>)> add2rS;
+            add2rS = [&](std::set<std::shared_ptr<NFAState>> &S, std::shared_ptr<NFAState> s) 
             {
-                S.push_back(s);
+                S.insert(s);
                 if (s->edge_type == NFAState::EdgeType::EPSILON) 
                 {
                     add2rS(S, s->next);
@@ -93,7 +93,7 @@ namespace cre
                 }
             };
 
-            std::vector<std::shared_ptr<NFAState>> rS;
+            std::set<std::shared_ptr<NFAState>> rS;
             for (auto s: S) 
             {
                 add2rS(rS, s);
@@ -101,14 +101,14 @@ namespace cre
             return rS;
         }
 
-        std::vector<std::shared_ptr<NFAState>> delta(std::vector<std::shared_ptr<NFAState>> q, char c)
+        std::set<std::shared_ptr<NFAState>> delta(std::set<std::shared_ptr<NFAState>> q, char c)
         {
-            std::vector<std::shared_ptr<NFAState>> rq;
+            std::set<std::shared_ptr<NFAState>> rq;
             for (auto s: q)
             {
                 if (s->edge_type == NFAState::EdgeType::CCL && std::find(s->input_set.begin(), s->input_set.end(), c) != s->input_set.end())
                 {
-                    rq.push_back(s->next);
+                    rq.insert(s->next);
                 }
             }
             return rq;
@@ -226,7 +226,8 @@ namespace cre
 					}
 				}
 
-				/* show the final dfa
+				// show the final dfa
+				/*
 				auto indexof_instates = [&](std::shared_ptr<DFAState> state)
 				{
 					for (int i = 0; i < states.size(); ++i) if (states[i] == state) return i;
@@ -258,7 +259,7 @@ namespace cre
 		std::shared_ptr<DFAState> to_dfa()
 		{
 			auto q0 = eps_closure({start});
-			std::vector<std::vector<std::shared_ptr<NFAState>>> Q = {q0};
+			std::vector<std::set<std::shared_ptr<NFAState>>> Q = {q0};
 			auto work_list = Q;
             std::vector<std::shared_ptr<DFAState>> mp = { std::make_shared<DFAState>((std::find(q0.begin(), q0.end(), end) != q0.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL)};
 
@@ -473,7 +474,7 @@ namespace cre
 				return node;
 			}
 
-			while (*reading == '(' || isalnum(*reading) || *reading == '*' || *reading == '?')
+			while (*reading == '(' || isalnum(*reading) || *reading == '*' || *reading == '+' || *reading == '?')
 			{
 				if (*reading == '(')
 				{
