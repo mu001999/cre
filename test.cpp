@@ -57,6 +57,14 @@ void test_closure()
 	assert(cre::match("233+", "23") == "");
 }
 
+void test_questionmark()
+{
+	assert(cre::match("233?", "233") == "233");
+	assert(cre::match("233?", "23") == "23");
+	assert(cre::match("233?", "2333") == "233");
+	assert(cre::match("233?", "2233") == "");
+}
+
 void test_complex()
 {
 	auto pattern = cre::Pattern("(abcdefg|123456789)*|cyyzerono1|suchangdashabi|chaoqunlaogenb|(ab*c)");
