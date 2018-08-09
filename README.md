@@ -4,3 +4,4 @@ CommonRegEx, single-file
 + [ ] support for normal re grammar
 + [ ] optimize redundant calculations
 + [ ] fix bugs
++ [ ] beautify the code
