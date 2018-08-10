@@ -94,23 +94,14 @@ namespace cre
             };
 
             std::set<std::shared_ptr<NFAState>> rS;
-            for (auto s: S) 
-            {
-                add2rS(rS, s);
-            }
+            for (auto s: S) add2rS(rS, s);
             return rS;
         }
 
         std::set<std::shared_ptr<NFAState>> delta(std::set<std::shared_ptr<NFAState>> q, char c)
         {
             std::set<std::shared_ptr<NFAState>> rq;
-            for (auto s: q)
-            {
-                if (s->edge_type == NFAState::EdgeType::CCL && std::find(s->input_set.begin(), s->input_set.end(), c) != s->input_set.end())
-                {
-                    rq.insert(s->next);
-                }
-            }
+            for (auto s: q) if (s->edge_type == NFAState::EdgeType::CCL && std::find(s->input_set.begin(), s->input_set.end(), c) != s->input_set.end()) rq.insert(s->next);
             return rq;
 		}
 		
@@ -127,10 +118,7 @@ namespace cre
 
 			{
 				std::vector<std::set<int>> _T = {{}, {}};
-				for (int i = 0; i < mp.size(); ++i)
-				{
-					_T[mp[i]->state_type == DFAState::StateType::END].insert(i);
-				}
+				for (int i = 0; i < mp.size(); ++i) _T[mp[i]->state_type == DFAState::StateType::END].insert(i);
 				T.insert(_T[0]); T.insert(_T[1]);
 			}
 
@@ -150,10 +138,7 @@ namespace cre
 							{
 								if (it->count(k))
 								{
-									if (it == flag_it)
-									{
-										s1.insert(i);
-									}
+									if (it == flag_it) s1.insert(i);
 									else if (flag_it == P.end() && it->count(i) == 0)
 									{
 										flag_it = it;
@@ -179,13 +164,7 @@ namespace cre
 			while (P != T)
 			{
 				P = T; T.clear();
-				for (auto &p: P)
-				{
-					for (auto &_p: split(p)) 
-					{
-						T.insert(_p);
-					}
-				}
+				for (auto &p: P) for (auto &_p: split(p)) T.insert(_p);
 			}
 
 			std::vector<std::shared_ptr<DFAState>> states(T.size(), nullptr);
@@ -198,13 +177,7 @@ namespace cre
 
 				auto indexof_inp = [&](std::shared_ptr<DFAState> state)
 				{
-					for (int i = 0, k = indexof_inmp(state); i < P.size(); ++i)
-					{
-						if (P[i].count(k))
-						{
-							return i;
-						}
-					}
+					for (int i = 0, k = indexof_inmp(state); i < P.size(); ++i) if (P[i].count(k)) return i;
 					return -1;
 				};
 
@@ -212,17 +185,9 @@ namespace cre
 				{
 					for (auto &k: P[i])
 					{
-						if (mp[k]->state_type == DFAState::StateType::END)
-						{
-							states[i]->state_type = DFAState::StateType::END;
-						}
-
+						if (mp[k]->state_type == DFAState::StateType::END) states[i]->state_type = DFAState::StateType::END;
 						if (k == 0) start = states[i];
-
-						for (auto it: mp[k]->to)
-						{
-							states[i]->to[it.first] = states[indexof_inp(it.second)];
-						}
+						for (auto it: mp[k]->to) states[i]->to[it.first] = states[indexof_inp(it.second)];
 					}
 				}
 
@@ -464,67 +429,50 @@ namespace cre
 				if (*reading != ')') std::cout << "missing )" << std::endl;
 				++reading;
 			}
-			else if (isalnum(*reading))
-			{
-				node = std::make_shared<LeafNode>(*reading++);
-			}
+			else if (isalnum(*reading)) node = std::make_shared<LeafNode>(*reading++);
 
-			if (node == nullptr) 
-			{
-				return node;
-			}
+			if (node == nullptr) return node;
 
-			while (*reading == '(' || isalnum(*reading) || *reading == '*' || *reading == '+' || *reading == '?')
+			while (*reading && *reading != '|' && *reading != ')')
 			{
-				if (*reading == '(')
+				switch (*reading)
 				{
+				case '(':
 					++reading;
-					if (right != nullptr) 
-					{
-						node = std::make_shared<CatNode>(node, right);
-					}
+					if (right != nullptr) node = std::make_shared<CatNode>(node, right);
 					right = gen_node(reading);
 					if (*reading != ')') std::cout << "missing )" << std::endl;
-					++reading;
-				}
-				else if (*reading == '*')
-				{
-					++reading;
+					break;
+				case '*':
 					if (right != nullptr) 
 					{
 						node = std::make_shared<CatNode>(node, std::make_shared<ClosureNode>(right));
 						right = nullptr;
 					}
 					else node = std::make_shared<ClosureNode>(node);
-				}
-				else if (*reading == '+')
-				{
-					++reading;
+					break;
+				case '+':
 					if (right != nullptr)
 					{
 						node = std::make_shared<CatNode>(node, std::make_shared<CatNode>(right, std::make_shared<ClosureNode>(right)));
 						right = nullptr;
 					}
 					else node = std::make_shared<CatNode>(node, std::make_shared<ClosureNode>(node));
-				}
-				else if (*reading == '?')
-				{
-					++reading;
+					break;
+				case '?':
 					if (right != nullptr)
 					{
 						node = std::make_shared<CatNode>(node, std::make_shared<QuestionMarkNode>(right));
 						right = nullptr;
 					}
 					else node = std::make_shared<QuestionMarkNode>(node);
+					break;
+				default:
+					if (right != nullptr) node = std::make_shared<CatNode>(node, right);
+					right = std::make_shared<LeafNode>(*reading);
+					break;
 				}
-				else
-				{
-					if (right != nullptr)
-					{
-						node = std::make_shared<CatNode>(node, right);
-					}
-					right = std::make_shared<LeafNode>(*reading++);
-				}
+				++reading;
 			}
 
 			if (*reading == '|')
@@ -533,10 +481,7 @@ namespace cre
 				if (right != nullptr) node = std::make_shared<CatNode>(node, right);
 				node = std::make_shared<SelectNode>(node, gen_node(reading));
 			}
-			else if (right != nullptr) 
-			{
-				node = std::make_shared<CatNode>(node, right);
-			}
+			else if (right != nullptr) node = std::make_shared<CatNode>(node, right);
 
 			return node;
 		}
