@@ -89,7 +89,7 @@ namespace cre
                 if (s->edge_type == NFAState::EdgeType::EPSILON) 
                 {
                     add2rS(S, s->next);
-                    if (s->next2 != nullptr) add2rS(S, s->next2);
+                    if (s->next2) add2rS(S, s->next2);
                 }
             };
 
@@ -431,7 +431,7 @@ namespace cre
 			}
 			else if (isalnum(*reading)) node = std::make_shared<LeafNode>(*reading++);
 
-			if (node == nullptr) return node;
+			if (!node) return node;
 
 			while (*reading && *reading != '|' && *reading != ')')
 			{
@@ -439,12 +439,12 @@ namespace cre
 				{
 				case '(':
 					++reading;
-					if (right != nullptr) node = std::make_shared<CatNode>(node, right);
+					if (right) node = std::make_shared<CatNode>(node, right);
 					right = gen_node(reading);
 					if (*reading != ')') std::cout << "missing )" << std::endl;
 					break;
 				case '*':
-					if (right != nullptr) 
+					if (right) 
 					{
 						node = std::make_shared<CatNode>(node, std::make_shared<ClosureNode>(right));
 						right = nullptr;
@@ -452,7 +452,7 @@ namespace cre
 					else node = std::make_shared<ClosureNode>(node);
 					break;
 				case '+':
-					if (right != nullptr)
+					if (right)
 					{
 						node = std::make_shared<CatNode>(node, std::make_shared<CatNode>(right, std::make_shared<ClosureNode>(right)));
 						right = nullptr;
@@ -460,7 +460,7 @@ namespace cre
 					else node = std::make_shared<CatNode>(node, std::make_shared<ClosureNode>(node));
 					break;
 				case '?':
-					if (right != nullptr)
+					if (right)
 					{
 						node = std::make_shared<CatNode>(node, std::make_shared<QuestionMarkNode>(right));
 						right = nullptr;
@@ -468,7 +468,7 @@ namespace cre
 					else node = std::make_shared<QuestionMarkNode>(node);
 					break;
 				default:
-					if (right != nullptr) node = std::make_shared<CatNode>(node, right);
+					if (right) node = std::make_shared<CatNode>(node, right);
 					right = std::make_shared<LeafNode>(*reading);
 					break;
 				}
@@ -478,10 +478,10 @@ namespace cre
 			if (*reading == '|')
 			{
 				++reading;
-				if (right != nullptr) node = std::make_shared<CatNode>(node, right);
+				if (right) node = std::make_shared<CatNode>(node, right);
 				node = std::make_shared<SelectNode>(node, gen_node(reading));
 			}
-			else if (right != nullptr) node = std::make_shared<CatNode>(node, right);
+			else if (right) node = std::make_shared<CatNode>(node, right);
 
 			return node;
 		}
@@ -493,7 +493,7 @@ namespace cre
 		Pattern(const char *pattern)
 		{
 			auto node = gen_node(pattern);
-			if (node == nullptr) dfa = std::make_shared<DFAState>(DFAState::StateType::END);
+			if (!node) dfa = std::make_shared<DFAState>(DFAState::StateType::END);
 			else dfa = node->compile()->to_dfa();
 		}
 
@@ -501,7 +501,7 @@ namespace cre
 		{
 			auto reading = pattern.c_str();
 			auto node = gen_node(reading);
-			if (node == nullptr) dfa = std::make_shared<DFAState>(DFAState::StateType::END);
+			if (!node) dfa = std::make_shared<DFAState>(DFAState::StateType::END);
 			else dfa = node->compile()->to_dfa();
 		}
 
