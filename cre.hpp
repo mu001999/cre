@@ -507,7 +507,13 @@ namespace cre
 			{
 				++reading;
 				node = gen_node(reading);
-				if (*reading != ')') std::cout << "missing )" << std::endl;
+				if (*reading != ')') std::cout << "cre syntax error: missing ')'" << std::endl;
+			}
+			else if (*reading == '[')
+			{
+				++reading;
+				node = gen_bracket(reading);
+				if (*reading != ']') std::cout << "cre syntax error: missing ']'" << std::endl;
 			}
 			else if (*reading == '.') node = std::make_shared<DotNode>();
 			else if (*reading && *reading != '|' && *reading != ')') node = std::make_shared<LeafNode>(*reading);
@@ -523,13 +529,13 @@ namespace cre
 					++reading;
 					if (right) node = std::make_shared<CatNode>(node, right);
 					right = gen_node(reading);
-					if (*reading != ')') std::cout << "cre syntax error: missing )" << std::endl;
+					if (*reading != ')') std::cout << "cre syntax error: missing ')'" << std::endl;
 					break;
 				case '[':
 					++reading;
 					if (right) node = std::make_shared<CatNode>(node, right);
 					right = gen_bracket(reading);
-					if (*reading != ']') std::cout << "cre syntax error: missing ]" << std::endl;
+					if (*reading != ']') std::cout << "cre syntax error: missing ']'" << std::endl;
 					break;
 				case '*':
 					if (right) 

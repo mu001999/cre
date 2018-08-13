@@ -70,7 +70,6 @@ void test_questionmark()
 {
 	assert(cre::match("233?", "233") == "233");
 	assert(cre::match("233?", "23") == "23");
-	std::cout << cre::match("233?", "233333") << std::endl;
 	assert(cre::match("233?", "2333") == "233");
 	assert(cre::match("233?", "2233") == "");
 	
@@ -82,7 +81,7 @@ void test_questionmark()
 
 void test_bracket_expr()
 {
-
+	assert(cre::match("[abc]", "abc") == "a");
 }
 
 void test_complex()
