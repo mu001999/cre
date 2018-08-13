@@ -81,7 +81,11 @@ void test_questionmark()
 
 void test_bracket_expr()
 {
-	assert(cre::match("[abc]", "abc") == "a");
+	auto pattern = cre::Pattern("[a-c]+[A-C]");
+	assert(pattern.match("abcABC") == "abcA");
+	assert(pattern.match("cccCCC") == "cccC");
+	assert(pattern.match("bbbBBB") == "bbbB");
+	assert(pattern.match("AAA") == "");
 }
 
 void test_complex()
