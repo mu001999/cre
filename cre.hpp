@@ -139,7 +139,7 @@ namespace cre
 								if (it->count(k))
 								{
 									if (it == flag_it) s1.insert(i);
-									else if (flag_it == P.end() && it->count(i) == 0)
+									else if (flag_it == P.end())
 									{
 										flag_it = it;
 										s1.insert(i);
