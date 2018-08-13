@@ -27,6 +27,10 @@ void test_single_character()
 	assert(cre::match("0", "1") == "");
 	assert(cre::match("9", "9") == "9");
 	assert(cre::match("9", "8") == "");
+	assert(cre::match(".", "0") == "0");
+	assert(cre::match(".", "9") == "9");
+	assert(cre::match(".", "A") == "A");
+	assert(cre::match(".", "") == "");
 }
 
 void test_concatenate()

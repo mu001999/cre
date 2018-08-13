@@ -295,8 +295,10 @@ namespace cre
 
 			ptr->start->edge_type = NFAState::EdgeType::CCL;
 			ptr->end->edge_type = NFAState::EdgeType::EMPTY;
-			ptr->start->input_set.push_back(leaf);
             ptr->start->next = ptr->end;
+
+			if (leaf == '.') for (char c = static_cast<char>(0); c >= 0; ++c) ptr->start->input_set.push_back(c);
+			else ptr->start->input_set.push_back(leaf);
             
 			return ptr;
 		}
@@ -429,7 +431,7 @@ namespace cre
 				if (*reading != ')') std::cout << "missing )" << std::endl;
 				++reading;
 			}
-			else if (isalnum(*reading)) node = std::make_shared<LeafNode>(*reading++);
+			else if (*reading && *reading != '|' && *reading != ')') node = std::make_shared<LeafNode>(*reading++);
 
 			if (!node) return node;
 
