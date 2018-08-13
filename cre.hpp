@@ -431,10 +431,73 @@ namespace cre
 		}
 	};
 
+	class BracketNode : public Node
+	{
+	private:
+
+		std::vector<int> chrs;
+
+	public:
+
+		BracketNode(std::set<int> &s)
+		{
+			for (auto &i: s) chrs.push_back(i);
+		}
+
+		virtual std::shared_ptr<NFAPair> compile()
+		{
+			auto ptr = std::make_shared<NFAPair>();
+			
+			ptr->start->edge_type = NFAState::EdgeType::CCL;
+			ptr->end->edge_type = NFAState::EdgeType::EMPTY;
+			ptr->start->next = ptr->end;
+			ptr->start->input_set = chrs;
+			
+			return ptr;
+		}
+
+	};
+
 
 	class Pattern
 	{
 	private:
+
+		std::shared_ptr<Node> gen_bracket(const char *&reading)
+		{
+			if (*reading == ']') return nullptr;
+			char left = -1;
+			bool range = false;
+			std::set<int> chrs;
+
+			while (*reading && *reading != ']')
+			{
+				if (*reading == '-')
+				{
+					if (range || left == -1) std::cout << "cre syntax error: incorrect position of '-'" << std::endl;
+					else range = true;
+				}
+				else 
+				{
+					if (range) 
+					{
+						for (; left <= *reading; ++left) chrs.insert(left);
+						left = -1;
+						range = false;
+					}
+					else 
+					{
+						if (left != -1)  chrs.insert(left);
+						left = *reading;
+					}
+				}
+				++reading;
+			}
+
+			if (left != -1) chrs.insert(left);
+
+			return std::make_shared<BracketNode>(chrs);
+		}
 
 		std::shared_ptr<Node> gen_node(const char *&reading)
 		{
@@ -460,7 +523,13 @@ namespace cre
 					++reading;
 					if (right) node = std::make_shared<CatNode>(node, right);
 					right = gen_node(reading);
-					if (*reading != ')') std::cout << "missing )" << std::endl;
+					if (*reading != ')') std::cout << "cre syntax error: missing )" << std::endl;
+					break;
+				case '[':
+					++reading;
+					if (right) node = std::make_shared<CatNode>(node, right);
+					right = gen_bracket(reading);
+					if (*reading != ']') std::cout << "cre syntax error: missing ]" << std::endl;
 					break;
 				case '*':
 					if (right) 

@@ -79,6 +79,11 @@ void test_questionmark()
 	assert(cre::match("2.?3+", "22") == "");
 }
 
+void test_bracket_expr()
+{
+
+}
+
 void test_complex()
 {
 	auto pattern = cre::Pattern("(abcdefg|123456789)*|cyyzerono1|suchangdashabi|chaoqunlaogenb|(ab*c)");
@@ -102,6 +107,8 @@ int main(int argc, char *argv[])
 	test_concatenate();
 	test_select();
 	test_closure();
+	test_questionmark();
+	test_bracket_expr();
 	test_complex();
 
 	std::cout << "test pass" << std::endl;
