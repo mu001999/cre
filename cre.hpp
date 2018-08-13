@@ -296,9 +296,7 @@ namespace cre
 			ptr->start->edge_type = NFAState::EdgeType::CCL;
 			ptr->end->edge_type = NFAState::EdgeType::EMPTY;
             ptr->start->next = ptr->end;
-
-			if (leaf == '.') for (char c = static_cast<char>(0); c >= 0; ++c) ptr->start->input_set.push_back(c);
-			else ptr->start->input_set.push_back(leaf);
+			ptr->start->input_set.push_back(leaf);
             
 			return ptr;
 		}
@@ -415,6 +413,24 @@ namespace cre
 
 	};
 
+	class DotNode : public Node
+	{
+	public:
+
+		virtual std::shared_ptr<NFAPair> compile()
+		{
+			auto ptr = std::make_shared<NFAPair>();
+			
+			ptr->start->edge_type = NFAState::EdgeType::CCL;
+			ptr->end->edge_type = NFAState::EdgeType::EMPTY;
+			ptr->start->next = ptr->end;
+
+			for (char c = static_cast<char>(0); c >= 0; ++c) if (c != '\n') ptr->start->input_set.push_back(c);
+			
+			return ptr;
+		}
+	};
+
 
 	class Pattern
 	{
@@ -429,12 +445,13 @@ namespace cre
 				++reading;
 				node = gen_node(reading);
 				if (*reading != ')') std::cout << "missing )" << std::endl;
-				++reading;
 			}
-			else if (*reading && *reading != '|' && *reading != ')') node = std::make_shared<LeafNode>(*reading++);
-
+			else if (*reading == '.') node = std::make_shared<DotNode>();
+			else if (*reading && *reading != '|' && *reading != ')') node = std::make_shared<LeafNode>(*reading);
+			++reading;
+			
 			if (!node) return node;
-
+			
 			while (*reading && *reading != '|' && *reading != ')')
 			{
 				switch (*reading)
@@ -468,6 +485,10 @@ namespace cre
 						right = nullptr;
 					}
 					else node = std::make_shared<QuestionMarkNode>(node);
+					break;
+				case '.':
+					if (right) node = std::make_shared<CatNode>(node, right);
+					right = std::make_shared<DotNode>();
 					break;
 				default:
 					if (right) node = std::make_shared<CatNode>(node, right);

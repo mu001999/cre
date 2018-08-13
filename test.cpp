@@ -37,6 +37,9 @@ void test_concatenate()
 {
 	assert(cre::match("ab", "ab") == "ab");
 	assert(cre::match("ab", "ac") == "");
+	assert(cre::match(".abc", "aabc") == "aabc");
+	assert(cre::match("a..d", "abcd") == "abcd");
+	assert(cre::match("...a", "aaab") == "");
 }
 
 void test_select()
@@ -59,6 +62,8 @@ void test_closure()
 
 	assert(cre::match("233+", "233") == "233");
 	assert(cre::match("233+", "23") == "");
+	
+	assert(cre::match(".+@.+", "mu00@jusot.com") == "mu00@jusot.com");
 }
 
 void test_questionmark()
@@ -67,6 +72,11 @@ void test_questionmark()
 	assert(cre::match("233?", "23") == "23");
 	assert(cre::match("233?", "2333") == "233");
 	assert(cre::match("233?", "2233") == "");
+	
+	assert(cre::match("2.?3+", "2333") == "2333");
+	assert(cre::match("2.?3+", "23") == "23");
+	assert(cre::match("2.?3+", "2233") == "2233");
+	assert(cre::match("2.?3+", "22") == "");
 }
 
 void test_complex()
