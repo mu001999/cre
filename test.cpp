@@ -86,6 +86,10 @@ void test_bracket_expr()
 	assert(pattern.match("cccCCC") == "cccC");
 	assert(pattern.match("bbbBBB") == "bbbB");
 	assert(pattern.match("AAA") == "");
+
+	pattern = cre::Pattern("[a-cA-C]+[D-FfG-K]");
+	assert(pattern.match("CcBbAaDEFG") == "CcBbAaD");
+	assert(pattern.match("ALDEF") == "");
 }
 
 void test_complex()
