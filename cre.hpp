@@ -15,22 +15,39 @@
 /* grammar
 expr
 	:
-	| character (expr|selecttail|closuretail)
-	| ( expr ) (expr|selecttail|closuretail)
+	| characters exprtail
+	| ( expr ) exprtail
 	;
 
-character
+exprtail
+	: expr | selectail | closretail | bracketail
+	;
+
+characters
 	: [0-9a-zA-Z]
+	| \ [a-zA-Z\]
+	| .
 	;
 
-selecttail
-	: | ( expr ) (expr|selecttail|closuretail)
-	| | characters (expr|selecttail|closuretail)
+selectail
+	: | ( expr ) exprtail
+	| | characters exprtail
 	;
 
 closuretail
 	: * expr
-	: + expr
+	| + expr
+	| ? expr
+	;
+
+bracketail
+	: [ characters bracketmid ] exprtail
+	;
+
+bracketmid
+	: 
+	| characters bracketmid
+	| - bracketmid
 	;
 */
 
