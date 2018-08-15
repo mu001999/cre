@@ -55,6 +55,23 @@ bracketmid
 
 namespace cre
 {
+    
+    static std::vector<int> SPACES = {' ', '\f', '\n', '\r', '\t', '\v'};
+    static std::vector<int> NOT_SPACES = []() {
+        std::vector<int> res;
+        for (char c = static_cast<char>(0); c >= 0; ++c) if (c != '\n' && c != '\f' && c != '\n' && c != '\r' && c != '\t' && c != '\v') res.push_back(c);
+        return res;
+    }();
+    static std::vector<int> WORDS = []() {
+        std::vector<int> res;
+        for (char c = static_cast<char>(48); c >= 0; ++c) if (isalnum(c) || c == '_') res.push_back(c);
+        return res;
+    }();
+    static std::vector<int> NOT_WORDS = []() {
+        std::vector<int> res;
+        for (char c = static_cast<char>(0); c >= 0; ++c) if (!isalnum(c) && c != '_') res.push_back(c);
+        return res;
+    }();
 	
 	class NFAState
 	{
@@ -462,6 +479,8 @@ namespace cre
 			for (auto &i: s) chrs.push_back(i);
 		}
 
+        BracketNode(std::vector<int> chrs) : chrs(chrs) {}
+
 		virtual std::shared_ptr<NFAPair> compile()
 		{
 			auto ptr = std::make_shared<NFAPair>();
@@ -510,7 +529,7 @@ namespace cre
 					if (*(reading+1) && (isalpha(*(reading+1)) || (*(reading + 1) > 63 && *(reading + 1) < 94)))
 					{
                         ++reading;
-                        return toupper(*(reading+1)) - 64;
+						return toupper(*(reading+1)) - 64;
 					}
                     else return 'c';
 				default:
@@ -523,6 +542,30 @@ namespace cre
 				return -1;
 			}
 		}
+
+        std::vector<int> translate_echr2vec(char &left, const char *&reading, bool range = true)
+        {
+            char res = translate_escape_chr(reading);
+            std::vector<int> ret;
+            if (res == 's') return SPACES;
+            else if (res == 'S') return NOT_SPACES;
+            else if (res == 'w') return WORDS;
+            else if (res == 'W') return NOT_WORDS;
+            else if (range) for (; left <= res; ++left) ret.push_back(left);
+            else left = res;
+            if (!range && (res == 's' || res == 'S' || res == 'w' || res == 'W')) left = -1;
+            return ret;
+        }
+
+        std::shared_ptr<Node> translate_echr2node(const char *&reading)
+        {
+            std::shared_ptr<Node> node = nullptr;
+            char left = -1;
+            auto res = translate_echr2vec(left, reading, false);
+            if (left == -1) node = std::make_shared<BracketNode>(res);
+            else node = std::make_shared<LeafNode>(left);
+            return node;
+        }
 
 		std::shared_ptr<Node> gen_bracket(const char *&reading)
 		{
@@ -538,20 +581,19 @@ namespace cre
 					if (range || left == -1) std::cout << "cre syntax error: incorrect position of '-'" << std::endl;
 					else range = true;
 				}
-				else 
-				{
-					if (range) 
-					{
-						for (; left <= (*reading == '\\' ? translate_escape_chr(reading) : *reading); ++left) chrs.insert(left);
-						left = -1;
-						range = false;
-					}
-					else 
-					{
-						if (left != -1)  chrs.insert(left);
-						left = (*reading == '\\' ? translate_escape_chr(reading) : *reading);
-					}
-				}
+				else if (range) 
+                {
+                    if (*reading == '\\') for (auto c: translate_echr2vec(left, reading)) chrs.insert(c);
+                    else for (; left <= *reading; ++left) chrs.insert(left);
+                    left = -1;
+                    range = false;
+                }
+                else 
+                {
+                    if (left != -1)  chrs.insert(left);
+                    if (*reading == '\\') for (auto c: translate_echr2vec(left, reading, false)) chrs.insert(c);
+                    else left = *reading;
+                }
 				++reading;
 			}
 
@@ -577,7 +619,7 @@ namespace cre
 				if (*reading != ']') std::cout << "cre syntax error: missing ']'" << std::endl;
 			}
 			else if (*reading == '.') node = std::make_shared<DotNode>();
-			else if (*reading && *reading != '|' && *reading != ')') node = std::make_shared<LeafNode>((*reading == '\\' ? translate_escape_chr(reading) : *reading));
+			else if (*reading && *reading != '|' && *reading != ')') node = *reading == '\\' ? translate_echr2node(reading) : std::make_shared<LeafNode>(*reading);
 			++reading;
 			
 			if (!node) return node;
@@ -628,7 +670,7 @@ namespace cre
 					break;
 				default:
 					if (right) node = std::make_shared<CatNode>(node, right);
-					right = std::make_shared<LeafNode>((*reading == '\\' ? translate_escape_chr(reading) : *reading));
+					right = *reading == '\\' ? translate_echr2node(reading) : std::make_shared<LeafNode>(*reading);
 					break;
 				}
 				++reading;
