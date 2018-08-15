@@ -480,6 +480,42 @@ namespace cre
 	{
 	private:
 
+		std::shared_ptr<Node> translate_escape_chr(const char *&reading)
+		{
+			++reading;
+			if (*reading)
+			{
+				switch (*reading)
+				{
+				case '0':
+					return std::make_shared<LeafNode>('\0');
+				case 'a':
+					return std::make_shared<LeafNode>('\a');
+				case 'b':
+					return std::make_shared<LeafNode>('\b');
+				case 't':
+					return std::make_shared<LeafNode>('\t');
+				case 'n':
+					return std::make_shared<LeafNode>('\n');
+				case 'v':
+					return std::make_shared<LeafNode>('\v');
+				case 'f':
+					return std::make_shared<LeafNode>('\f');
+				case 'r':
+					return std::make_shared<LeafNode>('\r');
+				case 'e':
+					return std::make_shared<LeafNode>('\e');
+				default:
+					return std::make_shared<LeafNode>(*reading);
+				}
+			}
+			else 
+			{
+				std::cout << "cre syntax error: only '\'" << std::endl;
+				return nullptr;
+			}
+		}
+
 		std::shared_ptr<Node> gen_bracket(const char *&reading)
 		{
 			if (*reading == ']') return nullptr;
@@ -533,6 +569,7 @@ namespace cre
 				if (*reading != ']') std::cout << "cre syntax error: missing ']'" << std::endl;
 			}
 			else if (*reading == '.') node = std::make_shared<DotNode>();
+			else if (*reading == '\\') node = translate_escape_chr(reading);
 			else if (*reading && *reading != '|' && *reading != ')') node = std::make_shared<LeafNode>(*reading);
 			++reading;
 			
@@ -581,6 +618,10 @@ namespace cre
 				case '.':
 					if (right) node = std::make_shared<CatNode>(node, right);
 					right = std::make_shared<DotNode>();
+					break;
+				case '\\':
+					if (right) node = std::make_shared<CatNode>(node, right);
+					right = translate_escape_chr(reading);
 					break;
 				default:
 					if (right) node = std::make_shared<CatNode>(node, right);
