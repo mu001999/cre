@@ -3,6 +3,7 @@
 
 #include <set>
 #include <cstdio>
+#include <cctype>
 #include <string>
 #include <vector>
 #include <memory>
@@ -480,7 +481,7 @@ namespace cre
 	{
 	private:
 
-		std::shared_ptr<Node> translate_escape_chr(const char *&reading)
+		int translate_escape_chr(const char *&reading)
 		{
 			++reading;
 			if (*reading)
@@ -488,31 +489,38 @@ namespace cre
 				switch (*reading)
 				{
 				case '0':
-					return std::make_shared<LeafNode>('\0');
+					return '\0';
 				case 'a':
-					return std::make_shared<LeafNode>('\a');
+					return '\a';
 				case 'b':
-					return std::make_shared<LeafNode>('\b');
+					return '\b';
 				case 't':
-					return std::make_shared<LeafNode>('\t');
+					return '\t';
 				case 'n':
-					return std::make_shared<LeafNode>('\n');
+					return '\n';
 				case 'v':
-					return std::make_shared<LeafNode>('\v');
+					return '\v';
 				case 'f':
-					return std::make_shared<LeafNode>('\f');
+					return '\f';
 				case 'r':
-					return std::make_shared<LeafNode>('\r');
+					return '\r';
 				case 'e':
-					return std::make_shared<LeafNode>('\e');
+					return '\e';
+				case 'c':
+					if (*(reading+1) && (isalpha(*(reading+1)) || (*(reading + 1) > 63 && *(reading + 1) < 94)))
+					{
+                        ++reading;
+                        return toupper(*(reading+1)) - 64;
+					}
+                    else return 'c';
 				default:
-					return std::make_shared<LeafNode>(*reading);
+					return *reading;
 				}
 			}
 			else 
 			{
 				std::cout << "cre syntax error: only '\'" << std::endl;
-				return nullptr;
+				return -1;
 			}
 		}
 
@@ -534,14 +542,14 @@ namespace cre
 				{
 					if (range) 
 					{
-						for (; left <= *reading; ++left) chrs.insert(left);
+						for (; left <= (*reading == '\\' ? translate_escape_chr(reading) : *reading); ++left) chrs.insert(left);
 						left = -1;
 						range = false;
 					}
 					else 
 					{
 						if (left != -1)  chrs.insert(left);
-						left = *reading;
+						left = (*reading == '\\' ? translate_escape_chr(reading) : *reading);
 					}
 				}
 				++reading;
@@ -569,8 +577,7 @@ namespace cre
 				if (*reading != ']') std::cout << "cre syntax error: missing ']'" << std::endl;
 			}
 			else if (*reading == '.') node = std::make_shared<DotNode>();
-			else if (*reading == '\\') node = translate_escape_chr(reading);
-			else if (*reading && *reading != '|' && *reading != ')') node = std::make_shared<LeafNode>(*reading);
+			else if (*reading && *reading != '|' && *reading != ')') node = std::make_shared<LeafNode>((*reading == '\\' ? translate_escape_chr(reading) : *reading));
 			++reading;
 			
 			if (!node) return node;
@@ -619,13 +626,9 @@ namespace cre
 					if (right) node = std::make_shared<CatNode>(node, right);
 					right = std::make_shared<DotNode>();
 					break;
-				case '\\':
-					if (right) node = std::make_shared<CatNode>(node, right);
-					right = translate_escape_chr(reading);
-					break;
 				default:
 					if (right) node = std::make_shared<CatNode>(node, right);
-					right = std::make_shared<LeafNode>(*reading);
+					right = std::make_shared<LeafNode>((*reading == '\\' ? translate_escape_chr(reading) : *reading));
 					break;
 				}
 				++reading;
