@@ -59,10 +59,10 @@ namespace cre
     
     static std::bitset<128> SPACES(0X100003e00ULL);
     static std::bitset<128> NOT_SPACES = ~SPACES;
-    static std::bitset<128> WORDS("11111111110000000111111111111111111111111110000001111111111111111111111111100000");
+    static std::bitset<128> WORDS("111111111111111111111111110100001111111111111111111111111100000001111111111000000000000000000000000000000000000000000000000");
     static std::bitset<128> NOT_WORDS = ~WORDS;
     
-    
+
     class NFAState
     {
     public:
@@ -321,7 +321,7 @@ namespace cre
             ptr->start->edge_type = NFAState::EdgeType::CCL;
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
             ptr->start->next = ptr->end;
-            ptr->start->input_set[leaf] = true;
+            ptr->start->input_set.set(leaf);
             
             return ptr;
         }
@@ -485,7 +485,7 @@ namespace cre
     {
     private:
 
-        int translate_escape_chr(const char *&reading)
+        char translate_escape_chr(const char *&reading)
         {
             ++reading;
             if (*reading)
@@ -532,11 +532,11 @@ namespace cre
         {
             char res = translate_escape_chr(reading);
             std::bitset<128> ret;
-            if (res == 's') return SPACES;
-            else if (res == 'S') return NOT_SPACES;
-            else if (res == 'w') return WORDS;
-            else if (res == 'W') return NOT_WORDS;
-            else if (range) for (; left <= res; ++left) ret[left] = true;
+            if (res == 's') ret = SPACES;
+            else if (res == 'S') ret = NOT_SPACES;
+            else if (res == 'w') ret = WORDS;
+            else if (res == 'W') ret = NOT_WORDS;
+            else if (range) for (; left <= res; ++left) ret.set(left);
             else left = res;
             if (!range && (res == 's' || res == 'S' || res == 'w' || res == 'W')) left = -1;
             return ret;
@@ -569,20 +569,20 @@ namespace cre
                 else if (range) 
                 {
                     if (*reading == '\\') chrs |= translate_echr2bset(left, reading);
-                    else for (; left <= *reading; ++left) chrs[left] = true;
+                    else for (; left <= *reading; ++left) chrs.set(left);
                     left = -1;
                     range = false;
                 }
                 else 
                 {
-                    if (left != -1)  chrs[left] = true;
+                    if (left != -1)  chrs.set(left);
                     if (*reading == '\\') chrs |= translate_echr2bset(left, reading, false);
                     else left = *reading;
                 }
                 ++reading;
             }
 
-            if (left != -1) chrs[left] = true;
+            if (left != -1) chrs.set(left);
 
             return std::make_shared<BracketNode>(chrs);
         }

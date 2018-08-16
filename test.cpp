@@ -27,10 +27,16 @@ void test_single_character()
 	assert(cre::match("0", "1") == "");
 	assert(cre::match("9", "9") == "9");
 	assert(cre::match("9", "8") == "");
+
 	assert(cre::match(".", "0") == "0");
 	assert(cre::match(".", "9") == "9");
 	assert(cre::match(".", "A") == "A");
 	assert(cre::match(".", "") == "");
+
+	assert(cre::match("\\s+", " \f\n\r\t\vabcdefg") == " \f\n\r\t\v");
+	assert(cre::match("\\w+", "abcdEFGHijkLmN_\nOPQRSTUVWXYZ") == "abcdEFGHijkLmN_");
+	assert(cre::match("\\S+", "abcdEFGHijkLmN_\a\nOPQRSTUVWXYZ") == "abcdEFGHijkLmN_\a");
+	assert(cre::match("\\W+", " \f\n\r\t\v_") == " \f\n\r\t\v");
 }
 
 void test_concatenate()
