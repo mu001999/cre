@@ -96,6 +96,10 @@ void test_bracket_expr()
 	pattern = cre::Pattern("[a-cA-C]+[D-FfG-K]");
 	assert(pattern.match("CcBbAaDEFG") == "CcBbAaD");
 	assert(pattern.match("ALDEF") == "");
+
+	pattern = cre::Pattern("[^abc]+");
+	assert(pattern.match("a") == "");
+	assert(pattern.match("defghijk\n \taxixixi") == "defghijk\n \t");
 }
 
 void test_complex()
