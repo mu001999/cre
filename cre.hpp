@@ -492,24 +492,15 @@ namespace cre
             {
                 switch (*reading)
                 {
-                case '0':
-                    return '\0';
-                case 'a':
-                    return '\a';
-                case 'b':
-                    return '\b';
-                case 't':
-                    return '\t';
-                case 'n':
-                    return '\n';
-                case 'v':
-                    return '\v';
-                case 'f':
-                    return '\f';
-                case 'r':
-                    return '\r';
-                case 'e':
-                    return '\e';
+                case '0': return '\0';
+                case 'a': return '\a';
+                case 'b': return '\b';
+                case 't': return '\t';
+                case 'n': return '\n';
+                case 'v': return '\v';
+                case 'f': return '\f';
+                case 'r': return '\r';
+                case 'e': return '\e';
                 case 'c':
                     if (*(reading+1) && (isalpha(*(reading+1)) || (*(reading + 1) > 63 && *(reading + 1) < 94)))
                     {
@@ -517,8 +508,7 @@ namespace cre
                         return toupper(*(reading+1)) - 64;
                     }
                     else return 'c';
-                default:
-                    return *reading;
+                default: return *reading;
                 }
             }
             else 
@@ -554,10 +544,16 @@ namespace cre
 
         std::shared_ptr<Node> gen_bracket(const char *&reading)
         {
-            if (*reading == ']') return nullptr;
             char left = -1;
-            bool range = false;
+            bool range = false, exclude = false;
             std::bitset<128> chrs;
+
+            if (*reading == '^')
+            {
+                ++reading;
+                exclude = true;
+            }
+            if (*reading == ']') return nullptr;
 
             while (*reading && *reading != ']')
             {
@@ -583,6 +579,8 @@ namespace cre
             }
 
             if (left != -1) chrs.set(left);
+
+            if (exclude) chrs.flip();
 
             return std::make_shared<BracketNode>(chrs);
         }
