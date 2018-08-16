@@ -34,8 +34,8 @@ void test_single_character()
 	assert(cre::match(".", "") == "");
 
 	assert(cre::match("\\s+", " \f\n\r\t\vabcdefg") == " \f\n\r\t\v");
-	assert(cre::match("\\w+", "abcdEFGHijkLmN_\nOPQRSTUVWXYZ") == "abcdEFGHijkLmN_");
 	assert(cre::match("\\S+", "abcdEFGHijkLmN_\a\nOPQRSTUVWXYZ") == "abcdEFGHijkLmN_\a");
+	assert(cre::match("\\w+", "abcdEFGHijkLmN_\nOPQRSTUVWXYZ") == "abcdEFGHijkLmN_");
 	assert(cre::match("\\W+", " \f\n\r\t\v_") == " \f\n\r\t\v");
 }
 
