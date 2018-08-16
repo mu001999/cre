@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <bitset>
 #include <iostream>
 #include <algorithm>
 #include <functional>
@@ -56,22 +57,11 @@ bracketmid
 namespace cre
 {
     
-    static std::vector<int> SPACES = {' ', '\f', '\n', '\r', '\t', '\v'};
-    static std::vector<int> NOT_SPACES = []() {
-        std::vector<int> res;
-        for (char c = static_cast<char>(0); c >= 0; ++c) if (c != '\n' && c != '\f' && c != '\n' && c != '\r' && c != '\t' && c != '\v') res.push_back(c);
-        return res;
-    }();
-    static std::vector<int> WORDS = []() {
-        std::vector<int> res;
-        for (char c = static_cast<char>(48); c >= 0; ++c) if (isalnum(c) || c == '_') res.push_back(c);
-        return res;
-    }();
-    static std::vector<int> NOT_WORDS = []() {
-        std::vector<int> res;
-        for (char c = static_cast<char>(0); c >= 0; ++c) if (!isalnum(c) && c != '_') res.push_back(c);
-        return res;
-    }();
+    static std::bitset<128> SPACES(0X100003e00ULL);
+    static std::bitset<128> NOT_SPACES = ~SPACES;
+    static std::bitset<128> WORDS("11111111110000000111111111111111111111111110000001111111111111111111111111100000");
+    static std::bitset<128> NOT_WORDS = ~WORDS;
+    
     
     class NFAState
     {
@@ -84,7 +74,7 @@ namespace cre
             EMPTY
         } edge_type;
         
-        std::vector<int> input_set;
+        std::bitset<128> input_set;
         std::shared_ptr<NFAState> next;
         std::shared_ptr<NFAState> next2;
 
@@ -136,7 +126,7 @@ namespace cre
         std::set<std::shared_ptr<NFAState>> delta(std::set<std::shared_ptr<NFAState>> q, char c)
         {
             std::set<std::shared_ptr<NFAState>> rq;
-            for (auto s: q) if (s->edge_type == NFAState::EdgeType::CCL && std::find(s->input_set.begin(), s->input_set.end(), c) != s->input_set.end()) rq.insert(s->next);
+            for (auto s: q) if (s->edge_type == NFAState::EdgeType::CCL && s->input_set[c]) rq.insert(s->next);
             return rq;
         }
         
@@ -331,7 +321,7 @@ namespace cre
             ptr->start->edge_type = NFAState::EdgeType::CCL;
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
             ptr->start->next = ptr->end;
-            ptr->start->input_set.push_back(leaf);
+            ptr->start->input_set[leaf] = true;
             
             return ptr;
         }
@@ -459,9 +449,9 @@ namespace cre
             ptr->start->edge_type = NFAState::EdgeType::CCL;
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
             ptr->start->next = ptr->end;
+            ptr->start->input_set = 1024ULL;
+            ptr->start->input_set.flip();
 
-            for (char c = static_cast<char>(0); c >= 0; ++c) if (c != '\n') ptr->start->input_set.push_back(c);
-            
             return ptr;
         }
     };
@@ -470,16 +460,11 @@ namespace cre
     {
     private:
 
-        std::vector<int> chrs;
+        std::bitset<128> chrs;
 
     public:
 
-        BracketNode(std::set<int> &s)
-        {
-            for (auto &i: s) chrs.push_back(i);
-        }
-
-        BracketNode(std::vector<int> chrs) : chrs(chrs) {}
+        BracketNode(std::bitset<128> chrs) : chrs(chrs) {}
 
         virtual std::shared_ptr<NFAPair> compile()
         {
@@ -543,15 +528,15 @@ namespace cre
             }
         }
 
-        std::vector<int> translate_echr2vec(char &left, const char *&reading, bool range = true)
+        std::bitset<128> translate_echr2bset(char &left, const char *&reading, bool range = true)
         {
             char res = translate_escape_chr(reading);
-            std::vector<int> ret;
+            std::bitset<128> ret;
             if (res == 's') return SPACES;
             else if (res == 'S') return NOT_SPACES;
             else if (res == 'w') return WORDS;
             else if (res == 'W') return NOT_WORDS;
-            else if (range) for (; left <= res; ++left) ret.push_back(left);
+            else if (range) for (; left <= res; ++left) ret[left] = true;
             else left = res;
             if (!range && (res == 's' || res == 'S' || res == 'w' || res == 'W')) left = -1;
             return ret;
@@ -561,7 +546,7 @@ namespace cre
         {
             std::shared_ptr<Node> node = nullptr;
             char left = -1;
-            auto res = translate_echr2vec(left, reading, false);
+            auto res = translate_echr2bset(left, reading, false);
             if (left == -1) node = std::make_shared<BracketNode>(res);
             else node = std::make_shared<LeafNode>(left);
             return node;
@@ -572,7 +557,7 @@ namespace cre
             if (*reading == ']') return nullptr;
             char left = -1;
             bool range = false;
-            std::set<int> chrs;
+            std::bitset<128> chrs;
 
             while (*reading && *reading != ']')
             {
@@ -583,21 +568,21 @@ namespace cre
                 }
                 else if (range) 
                 {
-                    if (*reading == '\\') for (auto c: translate_echr2vec(left, reading)) chrs.insert(c);
-                    else for (; left <= *reading; ++left) chrs.insert(left);
+                    if (*reading == '\\') chrs |= translate_echr2bset(left, reading);
+                    else for (; left <= *reading; ++left) chrs[left] = true;
                     left = -1;
                     range = false;
                 }
                 else 
                 {
-                    if (left != -1)  chrs.insert(left);
-                    if (*reading == '\\') for (auto c: translate_echr2vec(left, reading, false)) chrs.insert(c);
+                    if (left != -1)  chrs[left] = true;
+                    if (*reading == '\\') chrs |= translate_echr2bset(left, reading, false);
                     else left = *reading;
                 }
                 ++reading;
             }
 
-            if (left != -1) chrs.insert(left);
+            if (left != -1) chrs[left] = true;
 
             return std::make_shared<BracketNode>(chrs);
         }
