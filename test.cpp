@@ -4,148 +4,140 @@
 #include "cre.hpp"
 
 
+#define TEST(NAME)						static int NAME = [](){
+#define END								return 0; }();
+#define PRTLINE 						cout << "running at line " << __LINE__ << "..." << endl
+#define ASSERT(PATTERN, STR, TARGET) 	assert(cre::match(PATTERN, STR) == TARGET); PRTLINE
+#define ASSERT_WP(STR, TARGET) 			assert(pattern.match(STR) == TARGET); PRTLINE
+
+
 using namespace std;
 
 
-void test_blank()
-{
-	assert(cre::match("", "") == "");
-	assert(cre::match("", "abcdefg") == "");
-}
+TEST(BLANK)
+	ASSERT("", "", "");
+	ASSERT("", "abcdefg", "");
+END
 
-void test_single_character()
-{
-	assert(cre::match("a", "a") == "a");
-	assert(cre::match("a", "b") == "");
-	assert(cre::match("z", "z") == "z");
-	assert(cre::match("z", "y") == "");
-	assert(cre::match("A", "A") == "A");
-	assert(cre::match("A", "B") == "");
-	assert(cre::match("Z", "Z") == "Z");
-	assert(cre::match("Z", "Y") == "");
-	assert(cre::match("0", "0") == "0");
-	assert(cre::match("0", "1") == "");
-	assert(cre::match("9", "9") == "9");
-	assert(cre::match("9", "8") == "");
+TEST(SINGLE_CHAR)
+	ASSERT("a", "a", "a");
+	ASSERT("a", "b", "");
+	ASSERT("z", "z", "z");
+	ASSERT("z", "y", "");
+	ASSERT("z", "y", "");
+	ASSERT("A", "A", "A");
+	ASSERT("A", "B", "");
+	ASSERT("Z", "Z", "Z");
+	ASSERT("Z", "Y", "");
+	ASSERT("0", "0", "0");
+	ASSERT("0", "1", "");
+	ASSERT("9", "9", "9");
+	ASSERT("9", "8", "");
 
-	assert(cre::match(".", "0") == "0");
-	assert(cre::match(".", "9") == "9");
-	assert(cre::match(".", "A") == "A");
-	assert(cre::match(".", "") == "");
+	ASSERT(".", "0", "0");
+	ASSERT(".", "9", "9");
+	ASSERT(".", "A", "A");
+	ASSERT(".", "", "");
 
-	assert(cre::match("\\s+", " \f\n\r\t\vabcdefg") == " \f\n\r\t\v");
-	assert(cre::match("\\S+", "abcdEFGHijkLmN_\a\nOPQRSTUVWXYZ") == "abcdEFGHijkLmN_\a");
-	assert(cre::match("\\w+", "abcdEFGHijkLmN_\nOPQRSTUVWXYZ") == "abcdEFGHijkLmN_");
-	assert(cre::match("\\W+", " \f\n\r\t\v_") == " \f\n\r\t\v");
-}
+	ASSERT("\\s+", " \f\n\r\t\vabcdefg", " \f\n\r\t\v");
+	ASSERT("\\S+", "abcdEFGHijkLmN_\a\nOPQRSTUVWXYZ", "abcdEFGHijkLmN_\a");
+	ASSERT("\\w+", "abcdEFGHijkLmN_\nOPQRSTUVWXYZ", "abcdEFGHijkLmN_");
+	ASSERT("\\W+", " \f\n\r\t\v_", " \f\n\r\t\v");
+END
 
-void test_concatenate()
-{
-	assert(cre::match("ab", "ab") == "ab");
-	assert(cre::match("ab", "ac") == "");
-	assert(cre::match(".abc", "aabc") == "aabc");
-	assert(cre::match("a..d", "abcd") == "abcd");
-	assert(cre::match("...a", "aaab") == "");
-}
+TEST(CONCATENATE)
+	ASSERT("ab", "ab", "ab");
+	ASSERT("ab", "ac", "");
+	ASSERT(".abc", "aabc", "aabc");
+	ASSERT("a..d", "abcd", "abcd");
+	ASSERT("...a", "aaab", "");
+END
 
-void test_select()
-{
-	assert(cre::match("a|b", "a") == "a");
-	assert(cre::match("a|b", "b") == "b");
-	assert(cre::match("ab|c", "ab") == "ab");
-	assert(cre::match("ab|c", "c") == "c");
-}
+TEST(SELECT)
+	ASSERT("a|b", "a", "a");
+	ASSERT("a|b", "b", "b");
+	ASSERT("ab|c", "ab", "ab");
+	ASSERT("ab|c", "c", "c");
+END
 
-void test_qualifier()
-{
-	assert(cre::match("a(b|c)*", "abbbbbc") == "abbbbbc");
-	assert(cre::match("a(b|c)*", "a") == "a");
+TEST(QUALIFIER)
+	ASSERT("a(b|c)*", "abbbbbc", "abbbbbc");
+	ASSERT("a(b|c)*", "a", "a");
 
-	assert(cre::match("ab|c*", "ccc") == "ccc");
+	ASSERT("ab|c*", "ccc", "ccc");
 
-	assert(cre::match("abb*", "ab") == "ab");
-	assert(cre::match("abb*", "a") == "");
+	ASSERT("abb*", "ab", "ab");
+	ASSERT("abb*", "a", "");
 
-	assert(cre::match("233+", "233") == "233");
-	assert(cre::match("233+", "23") == "");
-	assert(cre::match("23+", "23") == "23");
+	ASSERT("233+", "233", "233");
+	ASSERT("233+", "23", "");
+	ASSERT("23+", "23", "23");
 
-	assert(cre::match("233?", "233") == "233");
-	assert(cre::match("233?", "23") == "23");
-	assert(cre::match("233?", "2333") == "233");
-	assert(cre::match("233?", "2233") == "");
+	ASSERT("233?", "233", "233");
+	ASSERT("233?", "23", "23");
+	ASSERT("233?", "2333", "233");
+	ASSERT("233?", "2233", "");
 	
-	assert(cre::match("2.?3+", "2333") == "2333");
-	assert(cre::match("2.?3+", "23") == "23");
-	assert(cre::match("2.?3+", "2233") == "2233");
-	assert(cre::match("2.?3+", "22") == "");
+	ASSERT("2.?3+", "2333", "2333");
+	ASSERT("2.?3+", "23", "23");
+	ASSERT("2.?3+", "2233", "2233");
+	ASSERT("2.?3+", "22", "");
 	
-	assert(cre::match(".+@.+", "mu00@jusot.com") == "mu00@jusot.com");
+	ASSERT(".+@.+", "mu00@jusot.com", "mu00@jusot.com");
 
-	assert(cre::match("23{0,3}", "2332") == "233");
-	assert(cre::match("23{0,3}", "") == "");
-	assert(cre::match("2{3}", "222") == "222");
-	assert(cre::match("2{3}", "22") == "");
-	assert(cre::match("2{3}", "2222") == "222");
-	assert(cre::match("2{3,}", "22") == "");
-	assert(cre::match("2{3,}", "22222") == "22222");
-}
+	ASSERT("23{0,3}", "2332", "233");
+	ASSERT("23{0,3}", "", "");
+	ASSERT("2{3}", "222", "222");
+	ASSERT("2{3}", "22", "");
+	ASSERT("2{3}", "2222", "222");
+	ASSERT("2{3,}", "22", "");
+	ASSERT("2{3,}", "22222", "22222");
+END
 
-void test_bracket_expr()
-{
+TEST(BRACKET)
 	{
 		auto pattern = cre::Pattern("[a-c]+[A-C]");
-		assert(pattern.match("abcABC") == "abcA");
-		assert(pattern.match("cccCCC") == "cccC");
-		assert(pattern.match("bbbBBB") == "bbbB");
-		assert(pattern.match("AAA") == "");
+		ASSERT_WP("abcABC", "abcA");
+		ASSERT_WP("cccCCC", "cccC");
+		ASSERT_WP("bbbBBB", "bbbB");
+		ASSERT_WP("AAA", "");
 	}
 	
 	{
 		auto pattern = cre::Pattern("[a-cA-C]+[D-FfG-K]");
-		assert(pattern.match("CcBbAaDEFG") == "CcBbAaD");
-		assert(pattern.match("ALDEF") == "");
+		ASSERT_WP("CcBbAaDEFG", "CcBbAaD");
+		ASSERT_WP("ALDEF", "");
 	}
 	
 	{
 		auto pattern = cre::Pattern("[^abc]+");
-		assert(pattern.match("a") == "");
-		assert(pattern.match("defghijk\n \taxixixi") == "defghijk\n \t");
+		ASSERT_WP("a", "");
+		ASSERT_WP("defghijk\n \taxixixi", "defghijk\n \t");
 	}
-}
+END
 
-void test_complex()
-{
+TEST(COMPLEX)
 	{
 		auto pattern = cre::Pattern("(abcdefg|123456789)*|cyyzerono1|suchangdashabi|chaoqunlaogenb|(ab*c)");
-		assert(pattern.match("abcdefgabcdefg") == "abcdefgabcdefg");
-		assert(pattern.match("12345668912345") == "");
-		assert(pattern.match("cyyzerono1") == "cyyzerono1");
-		assert(pattern.match("cvvzerono1") == "");
-		assert(pattern.match("abbbbbbbbc") == "abbbbbbbbc");
-		assert(pattern.match("ac") == "ac");
+		ASSERT_WP("abcdefgabcdefg", "abcdefgabcdefg");
+		ASSERT_WP("12345668912345", "");
+		ASSERT_WP("cyyzerono1", "cyyzerono1");
+		ASSERT_WP("cvvzerono1", "");
+		ASSERT_WP("abbbbbbbbc", "abbbbbbbbc");
+		ASSERT_WP("ac", "ac");
 	}
 	
 	{
 		auto pattern = cre::Pattern("((a|b|c)+(1|2|3)*0?(abc)?)+");
-		assert(pattern.match("abc1230abcdefg") == "abc1230abc");
-		assert(pattern.match("cccbbbaaadefg") == "cccbbbaaa");
+		ASSERT_WP("abc1230abcdefg", "abc1230abc");
+		ASSERT_WP("cccbbbaaadefg", "cccbbbaaa");
 	}
-	
-}
+END
 
 
 int main(int argc, char *argv[])
 {
-	test_blank();
-	test_single_character();
-	test_concatenate();
-	test_select();
-	test_qualifier();
-	test_bracket_expr();
-	test_complex();
-
-	std::cout << "test pass" << std::endl;
+	cout << "test pass!" << endl;
 
 	// system("pause"); // test on win.
 	return 0;
