@@ -22,7 +22,7 @@ expr
     ;
 
 exprtail
-    : expr | selectail | closretail | bracketail
+    : expr | selectail | qualifiertail | bracketail
     ;
 
 characters
@@ -36,7 +36,7 @@ selectail
     | | characters exprtail
     ;
 
-closuretail
+qualifiertail
     : * expr
     | + expr
     | ? expr
@@ -110,6 +110,7 @@ namespace cre
             std::function<void(std::set<std::shared_ptr<NFAState>>&, std::shared_ptr<NFAState>)> add2rS;
             add2rS = [&](std::set<std::shared_ptr<NFAState>> &S, std::shared_ptr<NFAState> s) 
             {
+                if (S.count(s)) return;
                 S.insert(s);
                 if (s->edge_type == NFAState::EdgeType::EPSILON) 
                 {
@@ -411,31 +412,67 @@ namespace cre
 
     };
 
-    class QuestionMarkNode : public Node
+    class QualifierNode : public Node
     {
     private:
 
         std::shared_ptr<Node> content;
+        int n, m;
 
     public:
 
-        QuestionMarkNode(std::shared_ptr<Node> content) : content(content) {}
+        QualifierNode(std::shared_ptr<Node> content, int n, int m) : content(content), n(n), m(m) {}
         virtual std::shared_ptr<NFAPair> compile()
         {
-            auto content = this->content->compile();
-            auto ptr = std::make_shared<NFAPair>();
-
-            ptr->start->edge_type = NFAState::EdgeType::EPSILON;
-            ptr->start->next = content->start;
-            ptr->start->next2 = ptr->end;
+            std::shared_ptr<NFAPair> ptr = std::make_shared<NFAPair>();
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
-            
-            content->end->edge_type = NFAState::EdgeType::EPSILON;
-            content->end->next = ptr->end;
+        
+            // -2 means {n}, -1 means {n,}
+            if (m == -2) // for {n}
+            {
+                std::shared_ptr<Node> temp = (n > 0) ? content : nullptr;
+                while (--n > 0) temp = std::make_shared<CatNode>(temp, content);
+                if (temp) return temp->compile();
+                else 
+                {
+                    ptr->start->edge_type = NFAState::EdgeType::EPSILON;
+                    ptr->start->next = ptr->end;
+                }
+            }
+            else if (m == -1) // for {n,}
+            {
+                std::shared_ptr<Node> temp = (n > 0) ? content : nullptr;
+                while (--n > 0) temp = std::make_shared<CatNode>(temp, content);
+                return temp ? std::make_shared<CatNode>(temp, std::make_shared<ClosureNode>(content))->compile() : std::make_shared<ClosureNode>(content)->compile();
+            }
+            else if (n < m && n >= 0) // for {n,m}
+            {
+                auto first = content->compile();
+                auto pre = first;
+                ptr->start->edge_type = NFAState::EdgeType::EPSILON;
+                ptr->start->next = first->start;
+                if (n == 0) ptr->start->next2 = ptr->end;
+
+                for (int i = 1; i < m; ++i)
+                {
+                    auto now = content->compile();
+                    pre->end->edge_type = NFAState::EdgeType::EPSILON;
+                    pre->end->next = now->start;
+                    if (i > n - 2) pre->end->next2 = ptr->end;
+                    pre = now;
+                }
+                
+                pre->end->edge_type = NFAState::EdgeType::EPSILON;
+                pre->end->next = ptr->end;
+            }
+            else 
+            {
+                ptr->start->edge_type = NFAState::EdgeType::EPSILON;
+                ptr->start->next = ptr->end;
+            }
 
             return ptr;
         }
-
     };
 
     class DotNode : public Node
@@ -603,9 +640,9 @@ namespace cre
             }
             else if (*reading == '.') node = std::make_shared<DotNode>();
             else if (*reading && *reading != '|' && *reading != ')') node = *reading == '\\' ? translate_echr2node(reading) : std::make_shared<LeafNode>(*reading);
-            ++reading;
             
             if (!node) return node;
+            ++reading;
             
             while (*reading && *reading != '|' && *reading != ')')
             {
@@ -634,18 +671,20 @@ namespace cre
                 case '+':
                     if (right)
                     {
-                        node = std::make_shared<CatNode>(node, std::make_shared<CatNode>(right, std::make_shared<ClosureNode>(right)));
+                        node = std::make_shared<CatNode>(node, std::make_shared<QualifierNode>(right, 1, -1));
+                        //node = std::make_shared<CatNode>(node, std::make_shared<CatNode>(right, std::make_shared<ClosureNode>(right)));
                         right = nullptr;
                     }
-                    else node = std::make_shared<CatNode>(node, std::make_shared<ClosureNode>(node));
+                    else node = std::make_shared<QualifierNode>(node, 1, -1);
+                    //else node = std::make_shared<CatNode>(node, std::make_shared<ClosureNode>(node));
                     break;
                 case '?':
                     if (right)
                     {
-                        node = std::make_shared<CatNode>(node, std::make_shared<QuestionMarkNode>(right));
+                        node = std::make_shared<CatNode>(node, std::make_shared<QualifierNode>(right, 0, 1));
                         right = nullptr;
                     }
-                    else node = std::make_shared<QuestionMarkNode>(node);
+                    else node = std::make_shared<QualifierNode>(node, 0, 1);
                     break;
                 case '.':
                     if (right) node = std::make_shared<CatNode>(node, right);
