@@ -672,11 +672,9 @@ namespace cre
                     if (right)
                     {
                         node = std::make_shared<CatNode>(node, std::make_shared<QualifierNode>(right, 1, -1));
-                        //node = std::make_shared<CatNode>(node, std::make_shared<CatNode>(right, std::make_shared<ClosureNode>(right)));
                         right = nullptr;
                     }
                     else node = std::make_shared<QualifierNode>(node, 1, -1);
-                    //else node = std::make_shared<CatNode>(node, std::make_shared<ClosureNode>(node));
                     break;
                 case '?':
                     if (right)

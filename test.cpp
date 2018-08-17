@@ -104,16 +104,16 @@ void test_bracket_expr()
 }
 
 void test_complex()
-{/*
+{
 	auto pattern = cre::Pattern("(abcdefg|123456789)*|cyyzerono1|suchangdashabi|chaoqunlaogenb|(ab*c)");
 	assert(pattern.match("abcdefgabcdefg") == "abcdefgabcdefg");
 	assert(pattern.match("12345668912345") == "");
 	assert(pattern.match("cyyzerono1") == "cyyzerono1");
 	assert(pattern.match("cvvzerono1") == "");
 	assert(pattern.match("abbbbbbbbc") == "abbbbbbbbc");
-	assert(pattern.match("ac") == "ac");*/
+	assert(pattern.match("ac") == "ac");
 	
-	auto pattern = cre::Pattern("((a|b|c)+(1|2|3)*0?(abc)?)+");
+	pattern = cre::Pattern("((a|b|c)+(1|2|3)*0?(abc)?)+");
 	assert(pattern.match("abc1230abcdefg") == "abc1230abc");
 	assert(pattern.match("cccbbbaaadefg") == "cccbbbaaa");
 }
@@ -121,13 +121,13 @@ void test_complex()
 
 int main(int argc, char *argv[])
 {
-	//test_blank();
-	//test_single_character();
-	//test_concatenate();
-	//test_select();
-	//test_closure();
-	//test_questionmark();
-	//test_bracket_expr();
+	test_blank();
+	test_single_character();
+	test_concatenate();
+	test_select();
+	test_closure();
+	test_questionmark();
+	test_bracket_expr();
 	test_complex();
 
 	std::cout << "test pass" << std::endl;
