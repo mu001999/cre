@@ -660,6 +660,28 @@ namespace cre
                     right = gen_bracket(reading);
                     if (*reading != ']') std::cout << "cre syntax error: missing ']'" << std::endl;
                     break;
+                case '{':
+                    ++reading;
+                    if (isdigit(*reading))
+                    {
+                        int n = *reading - '0', m = -2;
+                        ++reading;
+                        if (*reading == ',') 
+                        {
+                            ++reading;
+                            m = isdigit(*reading) ? *reading++ - '0' : -1;
+                        }
+                        if (*reading != '}') std::cout << "cre syntax error: missing '}'" << std::endl;
+
+                        if (right)
+                        {
+                            node = std::make_shared<CatNode>(node, std::make_shared<QualifierNode>(right, n, m));
+                            right = nullptr;
+                        }
+                        else node = std::make_shared<QualifierNode>(node, n, m);
+                    }
+                    else std::cout << "cre syntax error: only '{' & not number after '{'" << std::endl;
+                    break;
                 case '*':
                     if (right) 
                     {
@@ -769,7 +791,7 @@ namespace cre
 
     };
     
-
+    
     std::string match(const char *pattern, const char *str)
     {
         return Pattern(pattern).match(str);
