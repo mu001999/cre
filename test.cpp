@@ -56,7 +56,7 @@ void test_select()
 	assert(cre::match("ab|c", "c") == "c");
 }
 
-void test_closure()
+void test_qualifier()
 {
 	assert(cre::match("a(b|c)*", "abbbbbc") == "abbbbbc");
 	assert(cre::match("a(b|c)*", "a") == "a");
@@ -69,12 +69,7 @@ void test_closure()
 	assert(cre::match("233+", "233") == "233");
 	assert(cre::match("233+", "23") == "");
 	assert(cre::match("23+", "23") == "23");
-	
-	assert(cre::match(".+@.+", "mu00@jusot.com") == "mu00@jusot.com");
-}
 
-void test_questionmark()
-{
 	assert(cre::match("233?", "233") == "233");
 	assert(cre::match("233?", "23") == "23");
 	assert(cre::match("233?", "2333") == "233");
@@ -84,38 +79,59 @@ void test_questionmark()
 	assert(cre::match("2.?3+", "23") == "23");
 	assert(cre::match("2.?3+", "2233") == "2233");
 	assert(cre::match("2.?3+", "22") == "");
+	
+	assert(cre::match(".+@.+", "mu00@jusot.com") == "mu00@jusot.com");
+
+	assert(cre::match("23{0,3}", "2332") == "233");
+	assert(cre::match("23{0,3}", "") == "");
+	assert(cre::match("2{3}", "222") == "222");
+	assert(cre::match("2{3}", "22") == "");
+	assert(cre::match("2{3}", "2222") == "222");
+	assert(cre::match("2{3,}", "22") == "");
+	assert(cre::match("2{3,}", "22222") == "22222");
 }
 
 void test_bracket_expr()
 {
-	auto pattern = cre::Pattern("[a-c]+[A-C]");
-	assert(pattern.match("abcABC") == "abcA");
-	assert(pattern.match("cccCCC") == "cccC");
-	assert(pattern.match("bbbBBB") == "bbbB");
-	assert(pattern.match("AAA") == "");
-
-	pattern = cre::Pattern("[a-cA-C]+[D-FfG-K]");
-	assert(pattern.match("CcBbAaDEFG") == "CcBbAaD");
-	assert(pattern.match("ALDEF") == "");
-
-	pattern = cre::Pattern("[^abc]+");
-	assert(pattern.match("a") == "");
-	assert(pattern.match("defghijk\n \taxixixi") == "defghijk\n \t");
+	{
+		auto pattern = cre::Pattern("[a-c]+[A-C]");
+		assert(pattern.match("abcABC") == "abcA");
+		assert(pattern.match("cccCCC") == "cccC");
+		assert(pattern.match("bbbBBB") == "bbbB");
+		assert(pattern.match("AAA") == "");
+	}
+	
+	{
+		auto pattern = cre::Pattern("[a-cA-C]+[D-FfG-K]");
+		assert(pattern.match("CcBbAaDEFG") == "CcBbAaD");
+		assert(pattern.match("ALDEF") == "");
+	}
+	
+	{
+		auto pattern = cre::Pattern("[^abc]+");
+		assert(pattern.match("a") == "");
+		assert(pattern.match("defghijk\n \taxixixi") == "defghijk\n \t");
+	}
 }
 
 void test_complex()
 {
-	auto pattern = cre::Pattern("(abcdefg|123456789)*|cyyzerono1|suchangdashabi|chaoqunlaogenb|(ab*c)");
-	assert(pattern.match("abcdefgabcdefg") == "abcdefgabcdefg");
-	assert(pattern.match("12345668912345") == "");
-	assert(pattern.match("cyyzerono1") == "cyyzerono1");
-	assert(pattern.match("cvvzerono1") == "");
-	assert(pattern.match("abbbbbbbbc") == "abbbbbbbbc");
-	assert(pattern.match("ac") == "ac");
+	{
+		auto pattern = cre::Pattern("(abcdefg|123456789)*|cyyzerono1|suchangdashabi|chaoqunlaogenb|(ab*c)");
+		assert(pattern.match("abcdefgabcdefg") == "abcdefgabcdefg");
+		assert(pattern.match("12345668912345") == "");
+		assert(pattern.match("cyyzerono1") == "cyyzerono1");
+		assert(pattern.match("cvvzerono1") == "");
+		assert(pattern.match("abbbbbbbbc") == "abbbbbbbbc");
+		assert(pattern.match("ac") == "ac");
+	}
 	
-	pattern = cre::Pattern("((a|b|c)+(1|2|3)*0?(abc)?)+");
-	assert(pattern.match("abc1230abcdefg") == "abc1230abc");
-	assert(pattern.match("cccbbbaaadefg") == "cccbbbaaa");
+	{
+		auto pattern = cre::Pattern("((a|b|c)+(1|2|3)*0?(abc)?)+");
+		assert(pattern.match("abc1230abcdefg") == "abc1230abc");
+		assert(pattern.match("cccbbbaaadefg") == "cccbbbaaa");
+	}
+	
 }
 
 
@@ -125,8 +141,7 @@ int main(int argc, char *argv[])
 	test_single_character();
 	test_concatenate();
 	test_select();
-	test_closure();
-	test_questionmark();
+	test_qualifier();
 	test_bracket_expr();
 	test_complex();
 
