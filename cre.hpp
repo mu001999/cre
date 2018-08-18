@@ -40,10 +40,14 @@ qualifiertail
     : * expr
     | + expr
     | ? expr
+    | { [0-9]+ } expr
+    | { [0-9]+ , } expr
+    | { [0-9]+ , [0-9]+ } expr
     ;
 
 bracketail
     : [ characters bracketmid ] exprtail
+    | [ ^ characters bracketmid ] exprtail
     ;
 
 bracketmid
