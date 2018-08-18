@@ -65,7 +65,19 @@ namespace cre
     static std::bitset<128> NOT_SPACES = ~SPACES;
     static std::bitset<128> WORDS("111111111111111111111111110100001111111111111111111111111100000001111111111000000000000000000000000000000000000000000000000");
     static std::bitset<128> NOT_WORDS = ~WORDS;
+    static std::bitset<128> DIGITS(287948901175001088ULL);
+    static std::bitset<128> NOT_DIGITS = ~DIGITS;
     
+    static std::unordered_map<char, std::bitset<128>> ECMAP = 
+    {
+        {'s', SPACES},
+        {'S', NOT_SPACES},
+        {'w', WORDS},
+        {'W', NOT_WORDS},
+        {'d', DIGITS},
+        {'D', NOT_DIGITS}
+    };
+
 
     class NFAState
     {
@@ -563,13 +575,10 @@ namespace cre
         {
             char res = translate_escape_chr(reading);
             std::bitset<128> ret;
-            if (res == 's') ret = SPACES;
-            else if (res == 'S') ret = NOT_SPACES;
-            else if (res == 'w') ret = WORDS;
-            else if (res == 'W') ret = NOT_WORDS;
+            if (ECMAP.count(res)) ret = ECMAP[res];
             else if (range) for (; left <= res; ++left) ret.set(left);
             else left = res;
-            if (!range && (res == 's' || res == 'S' || res == 'w' || res == 'W')) left = -1;
+            if (!range && ECMAP.count(res)) left = -1;
             return ret;
         }
 
