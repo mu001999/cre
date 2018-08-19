@@ -538,6 +538,8 @@ namespace cre
     {
     private:
 
+        std::unordered_map<std::string, std::shared_ptr<Node>> ref_map; 
+
         char translate_escape_chr(const char *&reading)
         {
             ++reading;
@@ -642,7 +644,29 @@ namespace cre
             if (*reading == '(')
             {
                 ++reading;
-                node = gen_node(reading);
+                if (*reading == '?')
+                {
+                    ++reading;
+                    if (*reading == ':') ++reading;
+                    else std::cout << "cre syntax error: missing ':'" << std::endl;
+                    if (*reading == '<') ++reading;
+                    else std::cout << "cre syntax error: missing '<'" << std::endl;
+                    std::string name;
+                    while (isalnum(*reading) || *reading == '_') name += *reading++;
+                    if (*reading == '>') ++reading;
+                    else std::cout << "cre syntax error: missing '>'" << std::endl;
+                    if (*reading == ')') 
+                    {
+                        if (ref_map.count(name)) return ref_map[name];
+                        else std::cout << "cre error: can't find ref to " << name << std::endl; 
+                    }
+                    else 
+                    {
+                        node = gen_node(reading);
+                        ref_map[name] = node;
+                    }
+                }
+                else node = gen_node(reading);
                 if (*reading != ')') std::cout << "cre syntax error: missing ')'" << std::endl;
             }
             else if (*reading == '[')

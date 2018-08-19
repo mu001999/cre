@@ -137,7 +137,7 @@ END
 
 int main(int argc, char *argv[])
 {
-	cout << "test pass!" << endl;
+	printf("\ntest pass!\n");
 
 	// system("pause"); // test on win.
 	return 0;
