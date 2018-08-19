@@ -209,8 +209,8 @@ namespace cre
                 for (auto &p: P) for (auto &_p: split(p)) T.insert(_p);
             }
 
-            std::vector<std::shared_ptr<DFAState>> states(T.size(), nullptr);
-            for (auto &state: states) state = std::make_shared<DFAState>();
+            std::vector<std::shared_ptr<DFAState>> states;
+            for (auto &_: T) states.push_back(std::make_shared<DFAState>());
             std::shared_ptr<DFAState> start = nullptr;
 
             {
@@ -242,7 +242,7 @@ namespace cre
                 };
                 for (int i = 0; i < states.size(); ++i)
                 {
-                    printf("d%d\t", i);
+                    printf(states[i] == start ? "(start)d%d\t" : "d%d\t", i);
                     for (auto it: states[i]->to)
                     {
                         printf("%c->d%d\t", it.first, indexof_instates(it.second));
@@ -447,7 +447,7 @@ namespace cre
             if (m == -2) // for {n}
             {
                 std::shared_ptr<Node> temp = (n > 0) ? content : nullptr;
-                while (--n > 0) temp = std::make_shared<CatNode>(temp, content);
+                for (int i = 1; i < n; ++i) temp = std::make_shared<CatNode>(temp, content);
                 if (temp) return temp->compile();
                 else 
                 {
@@ -458,7 +458,7 @@ namespace cre
             else if (m == -1) // for {n,}
             {
                 std::shared_ptr<Node> temp = (n > 0) ? content : nullptr;
-                while (--n > 0) temp = std::make_shared<CatNode>(temp, content);
+                for (int i = 1; i < n; ++i) temp = std::make_shared<CatNode>(temp, content);
                 return temp ? std::make_shared<CatNode>(temp, std::make_shared<ClosureNode>(content))->compile() : std::make_shared<ClosureNode>(content)->compile();
             }
             else if (n < m && n >= 0) // for {n,m}
@@ -715,10 +715,10 @@ namespace cre
                             ++reading;
                             m = isdigit(*reading) ? *reading++ - '0' : -1;
                         }
-                        if (*reading != '}') std::cout << "cre syntax error: missing '}'" << std::endl;
 
                         if (right) right = std::make_shared<QualifierNode>(right, n, m);
                         else node = std::make_shared<QualifierNode>(node, n, m);
+                        if (*reading != '}') std::cout << "cre syntax error: missing '}'" << std::endl;
                     }
                     else std::cout << "cre syntax error: only '{' & no number after '{'" << std::endl;
                     break;

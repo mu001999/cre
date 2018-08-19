@@ -115,7 +115,7 @@ TEST(BRACKET)
 		ASSERT_WP("defghijk\n \taxixixi", "defghijk\n \t");
 	}
 
-	ASSERT("1[0-9]{2}", "199", "199");
+	ASSERT("1[0-9]{2}", "168", "168");
 END
 
 TEST(EXPR_REF)
