@@ -114,6 +114,17 @@ TEST(BRACKET)
 		ASSERT_WP("a", "");
 		ASSERT_WP("defghijk\n \taxixixi", "defghijk\n \t");
 	}
+
+	ASSERT("1[0-9]{2}", "199", "199");
+END
+
+TEST(EXPR_REF)
+	{
+		auto pattern = cre::Pattern("(?:<sec>25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])(\\.(?:<sec>)){3}");
+		ASSERT_WP("255.255.255.0", "255.255.255.0");
+		ASSERT_WP("256.255.255.0", "");
+		ASSERT_WP("192.168.1.1", "192.168.1.1");
+	}
 END
 
 TEST(COMPLEX)

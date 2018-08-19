@@ -637,6 +637,35 @@ namespace cre
             return std::make_shared<BracketNode>(chrs);
         }
 
+        std::shared_ptr<Node> gen_subexpr(const char *&reading)
+        {
+            std::shared_ptr<Node> node = nullptr;
+            if (*reading == '?')
+            {
+                ++reading;
+                if (*reading == ':') ++reading;
+                else std::cout << "cre syntax error: missing ':'" << std::endl;
+                if (*reading == '<') ++reading;
+                else std::cout << "cre syntax error: missing '<'" << std::endl;
+                std::string name;
+                while (isalnum(*reading) || *reading == '_') name += *reading++;
+                if (*reading == '>') ++reading;
+                else std::cout << "cre syntax error: missing '>'" << std::endl;
+                if (*reading == ')') 
+                {
+                    if (ref_map.count(name)) return ref_map[name];
+                    else std::cout << "cre error: can't find ref to " << name << std::endl; 
+                }
+                else 
+                {
+                    node = gen_node(reading);
+                    ref_map[name] = node;
+                }
+            }
+            else node = gen_node(reading);
+            return node;
+        }
+
         std::shared_ptr<Node> gen_node(const char *&reading)
         {
             std::shared_ptr<Node> node = nullptr, right = nullptr;
@@ -644,29 +673,7 @@ namespace cre
             if (*reading == '(')
             {
                 ++reading;
-                if (*reading == '?')
-                {
-                    ++reading;
-                    if (*reading == ':') ++reading;
-                    else std::cout << "cre syntax error: missing ':'" << std::endl;
-                    if (*reading == '<') ++reading;
-                    else std::cout << "cre syntax error: missing '<'" << std::endl;
-                    std::string name;
-                    while (isalnum(*reading) || *reading == '_') name += *reading++;
-                    if (*reading == '>') ++reading;
-                    else std::cout << "cre syntax error: missing '>'" << std::endl;
-                    if (*reading == ')') 
-                    {
-                        if (ref_map.count(name)) return ref_map[name];
-                        else std::cout << "cre error: can't find ref to " << name << std::endl; 
-                    }
-                    else 
-                    {
-                        node = gen_node(reading);
-                        ref_map[name] = node;
-                    }
-                }
-                else node = gen_node(reading);
+                node = gen_subexpr(reading);
                 if (*reading != ')') std::cout << "cre syntax error: missing ')'" << std::endl;
             }
             else if (*reading == '[')
@@ -688,7 +695,7 @@ namespace cre
                 case '(':
                     ++reading;
                     if (right) node = std::make_shared<CatNode>(node, right);
-                    right = gen_node(reading);
+                    right = gen_subexpr(reading);
                     if (*reading != ')') std::cout << "cre syntax error: missing ')'" << std::endl;
                     break;
                 case '[':
@@ -710,37 +717,21 @@ namespace cre
                         }
                         if (*reading != '}') std::cout << "cre syntax error: missing '}'" << std::endl;
 
-                        if (right)
-                        {
-                            node = std::make_shared<CatNode>(node, std::make_shared<QualifierNode>(right, n, m));
-                            right = nullptr;
-                        }
+                        if (right) right = std::make_shared<QualifierNode>(right, n, m);
                         else node = std::make_shared<QualifierNode>(node, n, m);
                     }
-                    else std::cout << "cre syntax error: only '{' & not number after '{'" << std::endl;
+                    else std::cout << "cre syntax error: only '{' & no number after '{'" << std::endl;
                     break;
                 case '*':
-                    if (right) 
-                    {
-                        node = std::make_shared<CatNode>(node, std::make_shared<ClosureNode>(right));
-                        right = nullptr;
-                    }
+                    if (right) right = std::make_shared<ClosureNode>(right);
                     else node = std::make_shared<ClosureNode>(node);
                     break;
                 case '+':
-                    if (right)
-                    {
-                        node = std::make_shared<CatNode>(node, std::make_shared<QualifierNode>(right, 1, -1));
-                        right = nullptr;
-                    }
+                    if (right) right = std::make_shared<QualifierNode>(right, 1, -1);
                     else node = std::make_shared<QualifierNode>(node, 1, -1);
                     break;
                 case '?':
-                    if (right)
-                    {
-                        node = std::make_shared<CatNode>(node, std::make_shared<QualifierNode>(right, 0, 1));
-                        right = nullptr;
-                    }
+                    if (right) right = std::make_shared<QualifierNode>(right, 0, 1);
                     else node = std::make_shared<QualifierNode>(node, 0, 1);
                     break;
                 case '.':
