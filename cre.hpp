@@ -752,7 +752,16 @@ namespace cre
 
         std::string search(const std::string str)
         {
-            return "";
+            std::string res;
+            auto begin = str.c_str();
+            auto reading = begin;
+            while (*reading)
+            {
+                res = match(str.substr(reading-begin));
+                if (res.size()) break;
+                ++reading;
+            }
+            return res;
         }
 
         std::string replace(const std::string str, std::string target)

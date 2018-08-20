@@ -149,6 +149,14 @@ TEST(COMPLEX)
 END
 
 
+//--TEST SEARCH METHOD--
+
+
+TEST(SEARCH_METHOD)
+	assert(cre::search("ab*c", "aaaaaabbbbaaabbbbabcccccc") == "abc");
+END
+
+
 int main(int argc, char *argv[])
 {
 	printf("\ntest pass!\n");
