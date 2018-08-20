@@ -607,6 +607,13 @@ namespace cre
         {
             std::shared_ptr<Node> node = nullptr, right = nullptr;
 
+            if (*reading == '^')
+            {
+                ++reading;
+                if (begin) std::cout << "cre syntax error: '^' should be the begin of pattern string" << std::endl;
+                begin = true;
+            }
+
             if (*reading == '(')
             {
                 ++reading;
@@ -625,7 +632,7 @@ namespace cre
             if (!node) return node;
             ++reading;
 
-            while (*reading && *reading != '|' && *reading != ')')
+            while (*reading && *reading != '|' && *reading != ')' && *reading != '$')
             {
                 switch (*reading)
                 {
@@ -691,10 +698,17 @@ namespace cre
             }
             else if (right) node = std::make_shared<CatNode>(node, right);
 
+            if (*reading == '$')
+            {
+                ++reading;
+                if (end) std::cout << "cre syntax error: '$' should be the end of the pattern string" << std::endl;
+                end = true;
+            }
             return node;
         }
 
         std::shared_ptr<DFAState> dfa;
+        bool begin = false, end = false;
 
     public:
 
@@ -722,6 +736,7 @@ namespace cre
             while (*reading)
             {
                 if (state->to.count(*reading)) state = state->to[*reading];
+                else if (end) return "";
                 else break;
                 temp += *reading;
                 if (state->state_type == DFAState::StateType::END)
@@ -742,6 +757,7 @@ namespace cre
             while (*reading)
             {
                 if (state->to.count(*reading)) state = state->to[*reading];
+                else if (end) return "";
                 else break;
                 temp += *reading;
                 if (state->state_type == DFAState::StateType::END)
