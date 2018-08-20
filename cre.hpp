@@ -736,28 +736,7 @@ namespace cre
         }
 
 
-        std::string match(const char *str)
-        {
-            std::string res, temp;
-            auto reading = str;
-            auto state = dfa;
-            while (*reading)
-            {
-                if (state->to.count(*reading)) state = state->to[*reading];
-                else if (end) return "";
-                else break;
-                temp += *reading;
-                if (state->state_type == DFAState::StateType::END)
-                {
-                    res += temp;
-                    temp = "";
-                }
-                ++reading;
-            }
-            return res;
-        }
-
-        std::string match(const std::string &str)
+        std::string match(const std::string str)
         {
             std::string res, temp;
             auto reading = str.c_str();
@@ -778,27 +757,32 @@ namespace cre
             return res;
         }
 
+        std::string search(const std::string str)
+        {
+            return "";
+        }
+
+        std::string replace(const std::string str, std::string target)
+        {
+            return "";
+        }
+
     };
 
 
-    std::string match(const char *pattern, const char *str)
+    std::string match(const std::string pattern, const std::string str)
     {
         return Pattern(pattern).match(str);
     }
 
-    std::string match(const std::string &pattern, const char *str)
+    std::string search(const std::string pattern, const std::string str)
     {
-        return Pattern(pattern).match(str);
+        return "";
     }
 
-    std::string match(const char *pattern, const std::string &str)
+    std::string replace(const std::string pattern, const std::string str, const std::string target)
     {
-        return Pattern(pattern).match(str);
-    }
-
-    std::string match(const std::string &pattern, const std::string &str)
-    {
-        return Pattern(pattern).match(str);
+        return "";
     }
 
 }
