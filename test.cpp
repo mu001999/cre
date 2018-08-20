@@ -125,6 +125,11 @@ TEST(EXPR_REF)
 	}
 END
 
+TEST(START_END)
+	ASSERT("2333$", "23332", "");
+	ASSERT("2333$", "2333", "2333");
+END
+
 TEST(COMPLEX)
 	{
 		auto pattern = cre::Pattern("(abcdefg|123456789)*|cyyzerono1|suchangdashabi|chaoqunlaogenb|(ab*c)");
