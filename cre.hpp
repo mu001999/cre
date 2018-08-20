@@ -1,8 +1,8 @@
 #ifndef _CRE_H_
 #define _CRE_H_
 
+
 #include <set>
-#include <cstdio>
 #include <cctype>
 #include <string>
 #include <vector>
@@ -12,50 +12,6 @@
 #include <algorithm>
 #include <functional>
 #include <unordered_map>
-
-
-/* grammar
-expr
-    :
-    | characters exprtail
-    | ( expr ) exprtail
-    ;
-
-exprtail
-    : expr | selectail | qualifiertail | bracketail
-    ;
-
-characters
-    : [0-9a-zA-Z]
-    | \ [a-zA-Z\]
-    | .
-    ;
-
-selectail
-    : | ( expr ) exprtail
-    | | characters exprtail
-    ;
-
-qualifiertail
-    : * expr
-    | + expr
-    | ? expr
-    | { [0-9]+ } expr
-    | { [0-9]+ , } expr
-    | { [0-9]+ , [0-9]+ } expr
-    ;
-
-bracketail
-    : [ characters bracketmid ] exprtail
-    | [ ^ characters bracketmid ] exprtail
-    ;
-
-bracketmid
-    :
-    | characters bracketmid
-    | - bracketmid
-    ;
-*/
 
 
 namespace cre
@@ -232,25 +188,6 @@ namespace cre
                         for (auto it: mp[k]->to) states[i]->to[it.first] = states[indexof_inp(it.second)];
                     }
                 }
-
-                // show the final dfa
-                /*
-                auto indexof_instates = [&](std::shared_ptr<DFAState> state)
-                {
-                    for (int i = 0; i < states.size(); ++i) if (states[i] == state) return i;
-                    return -1;
-                };
-                for (int i = 0; i < states.size(); ++i)
-                {
-                    printf(states[i] == start ? "(start)d%d\t" : "d%d\t", i);
-                    for (auto it: states[i]->to)
-                    {
-                        printf("%c->d%d\t", it.first, indexof_instates(it.second));
-                    }
-                    printf("\n");
-                }
-                */
-
             }
             return start;
         }

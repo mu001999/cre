@@ -1,4 +1,3 @@
-#include <iostream>
 #include <cstdio>
 #include <cassert>
 #include "cre.hpp"
@@ -6,9 +5,8 @@
 
 #define TEST(NAME)						static int NAME = [](){
 #define END								return 0; }();
-#define PRTLINE 						cout << "running at line " << __LINE__ << "..." << endl
-#define ASSERT(PATTERN, STR, TARGET) 	assert(cre::match(PATTERN, STR) == TARGET); PRTLINE
-#define ASSERT_WP(STR, TARGET) 			assert(pattern.match(STR) == TARGET); PRTLINE
+#define ASSERT(PATTERN, STR, TARGET) 	assert(cre::match(PATTERN, STR) == TARGET); printf("running at line %d...\n", __LINE__)
+#define ASSERT_WP(STR, TARGET) 			assert(pattern.match(STR) == TARGET); printf("running at line %d...\n", __LINE__)
 
 
 using namespace std;

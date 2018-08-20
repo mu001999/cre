@@ -3,9 +3,9 @@ CommonRegEx, single-file
 Support ASCII
 
 ### TODO
-+ [ ] support for normal re grammar
 + [ ] optimize redundant calculations
 + [ ] fix bugs
++ [ ] add detailed error message
 + [ ] beautify the code
 
 ### Syntax
