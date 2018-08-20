@@ -31,6 +31,10 @@ $               | Matches the ending position of the string or the position just
 (?\<name\>...)  | Defines a marked subexpression. The string matched within the parentheses can be recalled later by the name.
 \s              | Matches a whitespace character; same as `[ \f\n\r\t\v]`.
 \S              | Matches anything BUT a whitespace; same as `[^ \f\n\r\t\v]`.
+\l              | Matches a lowercase letter; same as `[a-z]`.
+\L              | Matches anything BUT a lowercase letter; same as `[^a-z]`.
+\u              | Matched a uppercase letter; same as `[A-Z]`.
+\U              | Matched anything BUT a uppercase letter; same as `[^A-Z]`.
 \w              | Matches an alphanumeric character, including "\_"; same as `[A-Za-z0-9_]`.
 \W              | Matches a non-alphanumeric character, excluding "\_"; same as `[^A-Za-z0-9_]`.
 \d              | Matches a digit; same as `[0-9]`.
