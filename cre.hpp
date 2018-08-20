@@ -720,14 +720,7 @@ namespace cre
 
     public:
 
-        Pattern(const char *pattern)
-        {
-            auto node = gen_node(pattern);
-            if (!node) dfa = std::make_shared<DFAState>(DFAState::StateType::END);
-            else dfa = node->compile()->to_dfa();
-        }
-
-        Pattern(const std::string &pattern)
+        Pattern(const std::string pattern)
         {
             auto reading = pattern.c_str();
             auto node = gen_node(reading);
@@ -777,12 +770,12 @@ namespace cre
 
     std::string search(const std::string pattern, const std::string str)
     {
-        return "";
+        return Pattern(pattern).search(str);
     }
 
     std::string replace(const std::string pattern, const std::string str, const std::string target)
     {
-        return "";
+        return Pattern(pattern).replace(str, target);
     }
 
 }

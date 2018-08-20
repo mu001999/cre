@@ -10,8 +10,6 @@ Support ASCII
 
 ### Syntax
 
-Italic indicates todo
-
 Metacharacter   | Description
 --------------- | -----------
 .               | Matches any single character (many applications exclude newlines('\n'). Within bracket expressions, the dot character matches a literal dot. For example, `a.c` matches "abc", etc., but [a.c] matches only "a", ".", or "c".
@@ -41,3 +39,6 @@ $               | Matches the ending position of the string or the position just
 \D              | Matches a non-digit; same as `[^0-9]`.
 \cX             | Matches a control character indicated by X. For example, \cM matches a Control-M or carriage return. The value of x must be one of A-Z or a-z. Otherwise, treat c as a literal 'c' character.
 \0, \a, \b, \t, \n, \v, \f, \r, \r | Matches a escape character.
+
+### Examples
+* `(?:<sec>25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])(\\.(?:<sec>)){3}` denotes ipv4 address, such as 192.168.1.1, 255.255.255.0 and so on.
