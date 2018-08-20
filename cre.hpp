@@ -51,7 +51,7 @@ bracketail
     ;
 
 bracketmid
-    : 
+    :
     | characters bracketmid
     | - bracketmid
     ;
@@ -60,15 +60,15 @@ bracketmid
 
 namespace cre
 {
-    
+
     static std::bitset<128> SPACES(0X100003e00ULL);
     static std::bitset<128> NOT_SPACES = ~SPACES;
     static std::bitset<128> WORDS("111111111111111111111111110100001111111111111111111111111100000001111111111000000000000000000000000000000000000000000000000");
     static std::bitset<128> NOT_WORDS = ~WORDS;
     static std::bitset<128> DIGITS(287948901175001088ULL);
     static std::bitset<128> NOT_DIGITS = ~DIGITS;
-    
-    static std::unordered_map<char, std::bitset<128>> ECMAP = 
+
+    static std::unordered_map<char, std::bitset<128>> ECMAP =
     {
         {'s', SPACES},
         {'S', NOT_SPACES},
@@ -82,14 +82,14 @@ namespace cre
     class NFAState
     {
     public:
-        
+
         enum class EdgeType
         {
             EPSILON,
             CCL,
             EMPTY
         } edge_type;
-        
+
         std::bitset<128> input_set;
         std::shared_ptr<NFAState> next;
         std::shared_ptr<NFAState> next2;
@@ -97,18 +97,18 @@ namespace cre
         NFAState() : next(nullptr), next2(nullptr) {}
 
     };
-    
+
 
     class DFAState
     {
     public:
-        
+
         enum class StateType
         {
             NORMAL,
             END
         } state_type;
-        
+
         std::unordered_map<char, std::shared_ptr<DFAState>> to;
 
         DFAState() : state_type(StateType::NORMAL) {}
@@ -124,11 +124,11 @@ namespace cre
         std::set<std::shared_ptr<NFAState>> eps_closure(std::set<std::shared_ptr<NFAState>> S)
         {
             std::function<void(std::set<std::shared_ptr<NFAState>>&, std::shared_ptr<NFAState>)> add2rS;
-            add2rS = [&](std::set<std::shared_ptr<NFAState>> &S, std::shared_ptr<NFAState> s) 
+            add2rS = [&](std::set<std::shared_ptr<NFAState>> &S, std::shared_ptr<NFAState> s)
             {
                 if (S.count(s)) return;
                 S.insert(s);
-                if (s->edge_type == NFAState::EdgeType::EPSILON) 
+                if (s->edge_type == NFAState::EdgeType::EPSILON)
                 {
                     add2rS(S, s->next);
                     if (s->next2) add2rS(S, s->next2);
@@ -146,7 +146,7 @@ namespace cre
             for (auto s: q) if (s->edge_type == NFAState::EdgeType::CCL && s->input_set[c]) rq.insert(s->next);
             return rq;
         }
-        
+
         std::shared_ptr<DFAState> dfa_minimization(std::vector<std::shared_ptr<DFAState>> &mp)
         {
             std::set<std::set<int>> T;
@@ -167,7 +167,7 @@ namespace cre
             auto split = [&](const std::set<int> &S)
             {
                 std::vector<std::set<int>> res = {S};
-                for (char c = static_cast<char>(0); c >= 0; ++c) 
+                for (char c = static_cast<char>(0); c >= 0; ++c)
                 {
                     std::set<int> s1, s2;
                     auto flag_it = P.end();
@@ -194,7 +194,7 @@ namespace cre
                         else s2.insert(i);
                     }
 
-                    if (s1.size() && s2.size()) 
+                    if (s1.size() && s2.size())
                     {
                         res = {s1, s2};
                         return res;
@@ -270,33 +270,33 @@ namespace cre
             auto work_list = Q;
             std::vector<std::shared_ptr<DFAState>> mp = { std::make_shared<DFAState>((std::find(q0.begin(), q0.end(), end) != q0.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL)};
 
-            while (!work_list.empty()) 
+            while (!work_list.empty())
             {
                 auto q = work_list.back();
                 work_list.pop_back();
-                for (char c = static_cast<char>(0); c >= 0; ++c) 
+                for (char c = static_cast<char>(0); c >= 0; ++c)
                 {
                     auto t = eps_closure(delta(q, c));
                     if (t.empty()) continue;
-                    for (int i = 0; i < Q.size(); ++i) 
+                    for (int i = 0; i < Q.size(); ++i)
                     {
-                        if (Q[i] == q) 
+                        if (Q[i] == q)
                         {
                             int j = -1;
 
                             while (++j < Q.size())
                             {
-                                if (Q[j] == t) 
+                                if (Q[j] == t)
                                 {
                                     mp[i]->to[c] = mp[j];
                                     break;
                                 }
                             }
 
-                            if (j == Q.size()) 
+                            if (j == Q.size())
                             {
-                                Q.push_back(t); 
-                                work_list.push_back(t); 
+                                Q.push_back(t);
+                                work_list.push_back(t);
                                 mp.push_back(std::make_shared<DFAState>((std::find(t.begin(), t.end(), end) != t.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL));
                                 mp[i]->to[c] = mp.back();
                             }
@@ -306,7 +306,7 @@ namespace cre
                     }
                 }
             }
-            
+
             return dfa_minimization(mp);
         }
 
@@ -339,7 +339,7 @@ namespace cre
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
             ptr->start->next = ptr->end;
             ptr->start->input_set.set(leaf);
-            
+
             return ptr;
         }
 
@@ -389,7 +389,7 @@ namespace cre
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
             ptr->start->next = left->start;
             ptr->start->next2 = right->start;
-            
+
             left->end->edge_type = NFAState::EdgeType::EPSILON;
             right->end->edge_type = NFAState::EdgeType::EPSILON;
             left->end->next = ptr->end;
@@ -418,7 +418,7 @@ namespace cre
             ptr->start->next = content->start;
             ptr->start->next2 = ptr->end;
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
-            
+
             content->end->edge_type = NFAState::EdgeType::EPSILON;
             content->end->next = content->start;
             content->end->next2 = ptr->end;
@@ -442,14 +442,14 @@ namespace cre
         {
             std::shared_ptr<NFAPair> ptr = std::make_shared<NFAPair>();
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
-        
+
             // -2 means {n}, -1 means {n,}
             if (m == -2) // for {n}
             {
                 std::shared_ptr<Node> temp = (n > 0) ? content : nullptr;
                 for (int i = 1; i < n; ++i) temp = std::make_shared<CatNode>(temp, content);
                 if (temp) return temp->compile();
-                else 
+                else
                 {
                     ptr->start->edge_type = NFAState::EdgeType::EPSILON;
                     ptr->start->next = ptr->end;
@@ -477,11 +477,11 @@ namespace cre
                     if (i > n - 2) pre->end->next2 = ptr->end;
                     pre = now;
                 }
-                
+
                 pre->end->edge_type = NFAState::EdgeType::EPSILON;
                 pre->end->next = ptr->end;
             }
-            else 
+            else
             {
                 ptr->start->edge_type = NFAState::EdgeType::EPSILON;
                 ptr->start->next = ptr->end;
@@ -498,7 +498,7 @@ namespace cre
         virtual std::shared_ptr<NFAPair> compile()
         {
             auto ptr = std::make_shared<NFAPair>();
-            
+
             ptr->start->edge_type = NFAState::EdgeType::CCL;
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
             ptr->start->next = ptr->end;
@@ -522,12 +522,12 @@ namespace cre
         virtual std::shared_ptr<NFAPair> compile()
         {
             auto ptr = std::make_shared<NFAPair>();
-            
+
             ptr->start->edge_type = NFAState::EdgeType::CCL;
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
             ptr->start->next = ptr->end;
             ptr->start->input_set = chrs;
-            
+
             return ptr;
         }
 
@@ -538,7 +538,7 @@ namespace cre
     {
     private:
 
-        std::unordered_map<std::string, std::shared_ptr<Node>> ref_map; 
+        std::unordered_map<std::string, std::shared_ptr<Node>> ref_map;
 
         char translate_escape_chr(const char *&reading)
         {
@@ -566,7 +566,7 @@ namespace cre
                 default: return *reading;
                 }
             }
-            else 
+            else
             {
                 std::cout << "cre syntax error: only '\'" << std::endl;
                 return -1;
@@ -614,14 +614,14 @@ namespace cre
                     if (range || left == -1) std::cout << "cre syntax error: incorrect position of '-'" << std::endl;
                     else range = true;
                 }
-                else if (range) 
+                else if (range)
                 {
                     if (*reading == '\\') chrs |= translate_echr2bset(left, reading);
                     else for (; left <= *reading; ++left) chrs.set(left);
                     left = -1;
                     range = false;
                 }
-                else 
+                else
                 {
                     if (left != -1)  chrs.set(left);
                     if (*reading == '\\') chrs |= translate_echr2bset(left, reading, false);
@@ -651,12 +651,12 @@ namespace cre
                 while (isalnum(*reading) || *reading == '_') name += *reading++;
                 if (*reading == '>') ++reading;
                 else std::cout << "cre syntax error: missing '>'" << std::endl;
-                if (*reading == ')') 
+                if (*reading == ')')
                 {
                     if (ref_map.count(name)) return ref_map[name];
-                    else std::cout << "cre error: can't find ref to " << name << std::endl; 
+                    else std::cout << "cre error: can't find ref to " << name << std::endl;
                 }
-                else 
+                else
                 {
                     node = gen_node(reading);
                     ref_map[name] = node;
@@ -684,10 +684,10 @@ namespace cre
             }
             else if (*reading == '.') node = std::make_shared<DotNode>();
             else if (*reading && *reading != '|' && *reading != ')') node = *reading == '\\' ? translate_echr2node(reading) : std::make_shared<LeafNode>(*reading);
-            
+
             if (!node) return node;
             ++reading;
-            
+
             while (*reading && *reading != '|' && *reading != ')')
             {
                 switch (*reading)
@@ -710,7 +710,7 @@ namespace cre
                     {
                         int n = *reading - '0', m = -2;
                         ++reading;
-                        if (*reading == ',') 
+                        if (*reading == ',')
                         {
                             ++reading;
                             m = isdigit(*reading) ? *reading++ - '0' : -1;
@@ -768,7 +768,7 @@ namespace cre
             else dfa = node->compile()->to_dfa();
         }
 
-        Pattern(const std::string &pattern) 
+        Pattern(const std::string &pattern)
         {
             auto reading = pattern.c_str();
             auto node = gen_node(reading);
@@ -782,12 +782,12 @@ namespace cre
             std::string res, temp;
             auto reading = str;
             auto state = dfa;
-            while (*reading) 
+            while (*reading)
             {
                 if (state->to.count(*reading)) state = state->to[*reading];
                 else break;
                 temp += *reading;
-                if (state->state_type == DFAState::StateType::END) 
+                if (state->state_type == DFAState::StateType::END)
                 {
                     res += temp;
                     temp = "";
@@ -802,12 +802,12 @@ namespace cre
             std::string res, temp;
             auto reading = str.c_str();
             auto state = dfa;
-            while (*reading) 
+            while (*reading)
             {
                 if (state->to.count(*reading)) state = state->to[*reading];
                 else break;
                 temp += *reading;
-                if (state->state_type == DFAState::StateType::END) 
+                if (state->state_type == DFAState::StateType::END)
                 {
                     res += temp;
                     temp = "";
@@ -818,8 +818,8 @@ namespace cre
         }
 
     };
-    
-    
+
+
     std::string match(const char *pattern, const char *str)
     {
         return Pattern(pattern).match(str);

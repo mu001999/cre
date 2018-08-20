@@ -77,12 +77,12 @@ TEST(QUALIFIER)
 	ASSERT("233?", "23", "23");
 	ASSERT("233?", "2333", "233");
 	ASSERT("233?", "2233", "");
-	
+
 	ASSERT("2.?3+", "2333", "2333");
 	ASSERT("2.?3+", "23", "23");
 	ASSERT("2.?3+", "2233", "2233");
 	ASSERT("2.?3+", "22", "");
-	
+
 	ASSERT(".+@.+", "mu00@jusot.com", "mu00@jusot.com");
 
 	ASSERT("23{0,3}", "2332", "233");
@@ -102,13 +102,13 @@ TEST(BRACKET)
 		ASSERT_WP("bbbBBB", "bbbB");
 		ASSERT_WP("AAA", "");
 	}
-	
+
 	{
 		auto pattern = cre::Pattern("[a-cA-C]+[D-FfG-K]");
 		ASSERT_WP("CcBbAaDEFG", "CcBbAaD");
 		ASSERT_WP("ALDEF", "");
 	}
-	
+
 	{
 		auto pattern = cre::Pattern("[^abc]+");
 		ASSERT_WP("a", "");
@@ -137,7 +137,7 @@ TEST(COMPLEX)
 		ASSERT_WP("abbbbbbbbc", "abbbbbbbbc");
 		ASSERT_WP("ac", "ac");
 	}
-	
+
 	{
 		auto pattern = cre::Pattern("((a|b|c)+(1|2|3)*0?(abc)?)+");
 		ASSERT_WP("abc1230abcdefg", "abc1230abc");
