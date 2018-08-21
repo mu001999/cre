@@ -3,6 +3,7 @@ CommonRegEx, single-file
 Support ASCII
 
 ### TODO
++ [ ] add next[] for dfa in searching
 + [ ] optimize redundant calculations
 + [ ] fix bugs
 + [ ] add detailed error message

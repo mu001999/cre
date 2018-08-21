@@ -7,6 +7,7 @@
 #define END								return 0; }();
 #define ASSERT(PATTERN, STR, TARGET) 	assert(cre::match(PATTERN, STR) == TARGET); printf("running at line %d...\n", __LINE__)
 #define ASSERT_WP(STR, TARGET) 			assert(pattern.match(STR) == TARGET); printf("running at line %d...\n", __LINE__)
+#define ASSERT_SC(PATTERN, STR, TARGET) assert(cre::search(PATTERN, STR) == TARGET); printf("running at line %d...\n", __LINE__)
 
 
 using namespace std;
@@ -153,7 +154,7 @@ END
 
 
 TEST(SEARCH_METHOD)
-	assert(cre::search("ab*c", "aaaaaabbbbaaabbbbabcccccc") == "abc");
+	ASSERT_SC("ab*c+", "aaaaaabbbbaaabababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbababcccccc", "abcccccc");
 END
 
 
