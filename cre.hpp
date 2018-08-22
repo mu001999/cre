@@ -715,7 +715,13 @@ namespace cre
             return node;
         }
 
+        void cal_next()
+        {
+
+        }
+
         std::shared_ptr<DFAState> dfa;
+        std::unordered_map<std::shared_ptr<DFAState>, std::shared_ptr<DFAState>> next;
         bool begin = false, end = false;
 
     public:
@@ -726,6 +732,7 @@ namespace cre
             auto node = gen_node(reading);
             if (!node) dfa = std::make_shared<DFAState>(DFAState::StateType::END);
             else dfa = node->compile()->to_dfa();
+            cal_next();
         }
 
 
