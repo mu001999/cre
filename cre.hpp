@@ -717,6 +717,7 @@ namespace cre
 
         void cal_next()
         {
+            if (!dfa->to.size()) return;
 
         }
 
@@ -759,16 +760,29 @@ namespace cre
 
         std::string search(const std::string str)
         {
-            std::string res;
-            auto begin = str.c_str();
-            auto reading = begin;
+            if (start) return match(str);
+            std::unordered_map<std::shared_ptr<DFAState>, std::string> mapstr = {{dfa, ""}};
+            std::string res, temp;
+            auto reading = str.c_str();
+            auto state = dfa;
             while (*reading)
             {
-                res = match(str.substr(reading-begin));
-                if (res.size()) break;
-                ++reading;
+                if (state->to.count(*reading))
+                {
+                    state = state->to[*reading];
+                    mapstr[state] = (temp += *reading);
+                    if (state->state_type == DFAState::StateType::END) res = str.substr(reading - temp.size(), temp.size());
+                    ++reading;
+                }
+                else if (!end && res) return res;
+                else if (next.count(state))
+                {
+                    state = next[state];
+                    temp = mapstr[state];
+                    continue;
+                }
             }
-            return res;
+            return end ? temp : res;
         }
 
     };
