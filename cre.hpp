@@ -803,7 +803,7 @@ namespace cre
                 {
                     state = state->to[*reading];
                     mapstr[state] = (temp += *reading);
-                    if (state->state_type == DFAState::StateType::END) res = str.substr(reading - str.c_str() - temp.size(), temp.size());
+                    if (state->state_type == DFAState::StateType::END) res = str.substr(reading - str.c_str() - temp.size() + 1, temp.size());
                 }
                 else if (!end && res.size()) return res;
                 else if (next.count(state))
@@ -812,7 +812,7 @@ namespace cre
                     temp = mapstr[state];
                     continue;
                 }
-                else temp = "";
+                else mapstr[state] = temp = "";
                 ++reading;
             }
             return end ? temp : res;
