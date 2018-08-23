@@ -718,7 +718,44 @@ namespace cre
         void cal_next()
         {
             if (!dfa->to.size()) return;
-
+            std::set<std::shared_ptr<DFAState>> caled = {dfa};
+            std::vector<std::shared_ptr<DFAState>> states;
+            for (auto it: dfa->to) if (!caled.count(it.second))
+            {
+                next[it.second] = dfa;
+                caled.insert(it.second);
+                states.push_back(it.second);
+            }
+            while (states.size())
+            {
+                fot (auto state: states)
+                {
+                    for (auto it: state->to)
+                    {
+                        if (!caled.count(it.second))
+                        {
+                            auto _s = state;
+                            while (_s != dfa)
+                            {
+                                if (next[_s]->to.count(it.first))
+                                {
+                                    next[it.second] = _s;
+                                    break;
+                                }
+                                else _s = next[_s];
+                            }
+                            if (!next.count(it.second)) next[it.second] = dfa;
+                        }
+                    }
+                }
+                std::vector<std::shared_ptr<DFAState>> _ss;
+                for (auto state: states) for (auto it: state->to) if (!caled.count(it.second))
+                {
+                    _ss.push_back(it.second);
+                    caled.insert(it.second);
+                }
+                states = _ss;
+            }
         }
 
         std::shared_ptr<DFAState> dfa;
@@ -772,7 +809,6 @@ namespace cre
                     state = state->to[*reading];
                     mapstr[state] = (temp += *reading);
                     if (state->state_type == DFAState::StateType::END) res = str.substr(reading - temp.size(), temp.size());
-                    ++reading;
                 }
                 else if (!end && res) return res;
                 else if (next.count(state))
@@ -781,6 +817,8 @@ namespace cre
                     temp = mapstr[state];
                     continue;
                 }
+                else temp = "";
+                ++reading;
             }
             return end ? temp : res;
         }
