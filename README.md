@@ -3,13 +3,13 @@ CommonRegEx, single-file
 Support ASCII
 
 ### TODO
-+ [ ] add next[] for dfa in searching
++ [ ] add some usefull features
 + [ ] optimize redundant calculations
 + [ ] fix bugs
 + [ ] add detailed error message
 + [ ] beautify the code
 
-### Syntax
+### SYNTAX
 
 Metacharacter   | Description
 --------------- | -----------
@@ -41,5 +41,20 @@ $               | Matches the ending position of the string or the position just
 \cX             | Matches a control character indicated by X. For example, \cM matches a Control-M or carriage return. The value of x must be one of A-Z or a-z. Otherwise, treat c as a literal 'c' character.
 \0, \a, \b, \t, \n, \v, \f, \r, \r | Matches a escape character.
 
-### Examples
+###### Examples
 * `(?:<sec>25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])(\\.(?:<sec>)){3}` denotes ipv4 address, such as 192.168.1.1, 255.255.255.0 and so on.
+
+### Interface
+
+###### Class
+
+Class Name | Description
+---------- | -----------
+Pattern    | Pattern object, provides methods for matching and searching.
+
+###### Functions
+
+Function Name | Description
+------------- | -----------
+match         | attempts to match a regular expression to an entire character sequence.
+search        | attempts to match a regular expression to any part of a character sequence.
