@@ -728,26 +728,21 @@ namespace cre
             }
             while (states.size())
             {
-                fot (auto state: states)
+                fot (auto state: states) for (auto it: state->to) if (!caled.count(it.second))
                 {
-                    for (auto it: state->to)
+                    auto _s = state;
+                    while (_s != dfa)
                     {
-                        if (!caled.count(it.second))
+                        if (next[_s]->to.count(it.first))
                         {
-                            auto _s = state;
-                            while (_s != dfa)
-                            {
-                                if (next[_s]->to.count(it.first))
-                                {
-                                    next[it.second] = _s;
-                                    break;
-                                }
-                                else _s = next[_s];
-                            }
-                            if (!next.count(it.second)) next[it.second] = dfa;
+                            next[it.second] = _s;
+                            break;
                         }
+                        else _s = next[_s];
                     }
+                    if (!next.count(it.second)) next[it.second] = dfa;
                 }
+
                 std::vector<std::shared_ptr<DFAState>> _ss;
                 for (auto state: states) for (auto it: state->to) if (!caled.count(it.second))
                 {
