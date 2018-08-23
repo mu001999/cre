@@ -728,7 +728,7 @@ namespace cre
             }
             while (states.size())
             {
-                fot (auto state: states) for (auto it: state->to) if (!caled.count(it.second))
+                for (auto state: states) for (auto it: state->to) if (!caled.count(it.second))
                 {
                     auto _s = state;
                     while (_s != dfa)
@@ -792,7 +792,7 @@ namespace cre
 
         std::string search(const std::string str)
         {
-            if (start) return match(str);
+            if (begin) return match(str);
             std::unordered_map<std::shared_ptr<DFAState>, std::string> mapstr = {{dfa, ""}};
             std::string res, temp;
             auto reading = str.c_str();
@@ -803,9 +803,9 @@ namespace cre
                 {
                     state = state->to[*reading];
                     mapstr[state] = (temp += *reading);
-                    if (state->state_type == DFAState::StateType::END) res = str.substr(reading - temp.size(), temp.size());
+                    if (state->state_type == DFAState::StateType::END) res = str.substr(reading - str.c_str() - temp.size(), temp.size());
                 }
-                else if (!end && res) return res;
+                else if (!end && res.size()) return res;
                 else if (next.count(state))
                 {
                     state = next[state];
