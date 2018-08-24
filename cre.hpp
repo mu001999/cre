@@ -820,7 +820,40 @@ namespace cre
 
         std::string replace(const std::string str, const std::string target)
         {
-            return "";
+            if (begin) return target + str.substr(match(str).size());
+            std::unordered_map<std::shared_ptr<DFAState>, std::string> mapstr = {{dfa, ""}};
+            std::string ret, res, temp;
+            auto reading = str.c_str();
+            auto state = dfa;
+            while (*reading)
+            {
+                if (state->to.count(*reading))
+                {
+                    state = state->to[*reading];
+                    mapstr[state] = (temp += *reading);
+                    if (state->state_type == DFAState::StateType::END) res = str.substr(reading - str.c_str() - temp.size() + 1, temp.size());
+                }
+                else if (!end && res.size())
+                {
+                    ret += target + temp.substr(res.size());
+                    state = dfa;
+                    res = temp = "";
+                    continue;
+                }
+                else if (next.count(state))
+                {
+                    state = next[state];
+                    temp = mapstr[state];
+                    continue;
+                }
+                else
+                {
+                    mapstr[state] = temp = "";
+                    ret += *reading;
+                }
+                ++reading;
+            }
+            return ret;
         }
 
     };

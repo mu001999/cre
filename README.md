@@ -3,7 +3,6 @@ CommonRegEx, single-file
 Support ASCII
 
 ### TODO
-+ [ ] add some usefull features
 + [ ] optimize redundant calculations
 + [ ] fix bugs
 + [ ] add detailed error message
