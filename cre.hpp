@@ -818,6 +818,11 @@ namespace cre
             return end ? temp : res;
         }
 
+        std::string replace(const std::string str, const std::string target)
+        {
+            return "";
+        }
+
     };
 
 
@@ -829,6 +834,11 @@ namespace cre
     std::string search(const std::string pattern, const std::string str)
     {
         return Pattern(pattern).search(str);
+    }
+
+    std::string replace(const std::string pattern, const std::string str, const std::string target)
+    {
+        return Pattern(pattern).replace(str, target);
     }
 
 }
