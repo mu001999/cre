@@ -3,11 +3,13 @@
 #include "cre.hpp"
 
 
-#define TEST(NAME)						static int NAME = [](){
-#define END								return 0; }();
-#define ASSERT(PATTERN, STR, TARGET) 	assert(cre::match(PATTERN, STR) == TARGET); printf("running at line %d...\n", __LINE__)
-#define ASSERT_WP(STR, TARGET) 			assert(pattern.match(STR) == TARGET); printf("running at line %d...\n", __LINE__)
-#define ASSERT_SC(PATTERN, STR, TARGET) assert(cre::search(PATTERN, STR) == TARGET); printf("running at line %d...\n", __LINE__)
+#define TEST(NAME)									static int NAME = [](){
+#define END											return 0; }();
+#define PRTL										printf("running at line %d...\n", __LINE__)
+#define ASSERT(PATTERN, STR, TARGET) 				PRTL; assert(cre::match(PATTERN, STR) == TARGET)
+#define ASSERT_WP(STR, TARGET) 						PRTL; assert(pattern.match(STR) == TARGET)
+#define ASSERT_SC(PATTERN, STR, TARGET) 			PRTL; assert(cre::search(PATTERN, STR) == TARGET)
+#define ASSERT_RP(PATTERN, STR, STARGET, TARGET)	PRTL; assert(cre::replace(PATTERN, STR, STARGET) == TARGET)
 
 
 using namespace std;
@@ -153,8 +155,15 @@ END
 //--TEST SEARCH METHOD--
 
 
-TEST(SEARCH_METHOD)
+TEST(SEARCH_M)
 	ASSERT_SC("ab*c+", "aaaaaabbbbaaabababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbababcccccc", "abcccccc");
+END
+
+
+//--TEST REPLACE METHOD--
+
+TEST(REPLACE_M)
+	ASSERT_RP("[A-Z]+", "ABCDEFGhijklmnOPQrstUVWxyz", "_", "_hijklmn_rst_xyz");
 END
 
 
