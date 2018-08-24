@@ -49,7 +49,7 @@ $               | Matches the ending position of the string or the position just
 
 Class Name | Description
 ---------- | -----------
-Pattern    | Pattern object, provides methods for matching and searching.
+Pattern    | Pattern object, provides methods for matching, searching and replacing.
 
 ###### Functions
 
@@ -58,3 +58,24 @@ Function Name | Description
 match         | attempts to match a regular expression to an entire character sequence.
 search        | attempts to match a regular expression to any part of a character sequence.
 replace       | replaces occurrences of a regular expression with formatted replacement text.
+
+###### Examples
+
+```cpp
+// e.g. Pattern's methods
+#include "cre.hpp"
+
+auto pattern = cre::Pattern("(?:<sec>25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])(\\.(?:<sec>)){3}")
+auto match_result = pattern.match("192.168.1.1");
+auto search_result = pattern.search("ipv4 address: 123.123.123.123");
+auto replace_result = pattern.replace("ipv4 address: 123.123.123.123", "***.***.***.***");
+```
+
+```cpp
+// e.g. normal functions
+#include "cre.hpp"
+
+auto match_result = cre::match("(?:<sec>25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])(\\.(?:<sec>)){3}", "192.168.1.1");
+auto search_result = cre::search("(?:<sec>25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])(\\.(?:<sec>)){3}", "ipv4 address: 123.123.123.123");
+auto replace_result = cre::replace("(?:<sec>25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])(\\.(?:<sec>)){3}", "ipv4 address: 123.123.123.123", "***.***.***.***");
+```
