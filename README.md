@@ -57,3 +57,4 @@ Function Name | Description
 ------------- | -----------
 match         | attempts to match a regular expression to an entire character sequence.
 search        | attempts to match a regular expression to any part of a character sequence.
+replace       | replaces occurrences of a regular expression with formatted replacement text.
