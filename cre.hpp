@@ -832,6 +832,7 @@ namespace cre
                 else if (next.count(state))
                 {
                     state = next[state];
+                    if (mapstr[state].size() < temp.size()) ret += temp.substr(mapstr[state].size());
                     temp = mapstr[state];
                     continue;
                 }
@@ -842,6 +843,7 @@ namespace cre
                 }
                 ++reading;
             }
+            if (res.size()) ret += target + temp.substr(res.size());
             return ret;
         }
 

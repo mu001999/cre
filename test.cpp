@@ -3,6 +3,12 @@
 #include "cre.hpp"
 
 
+using namespace std;
+
+
+//--DEFINE HELPFUL MACROS--
+
+
 #define TEST(NAME)									static int NAME = [](){
 #define END											return 0; }();
 #define PRTL										printf("running at line %d...\n", __LINE__)
@@ -10,9 +16,6 @@
 #define ASSERT_WP(STR, TARGET) 						PRTL; assert(pattern.match(STR) == TARGET)
 #define ASSERT_SC(PATTERN, STR, TARGET) 			PRTL; assert(cre::search(PATTERN, STR) == TARGET)
 #define ASSERT_RP(PATTERN, STR, STARGET, TARGET)	PRTL; assert(cre::replace(PATTERN, STR, STARGET) == TARGET)
-
-
-using namespace std;
 
 
 //--TEST NOrMAL MATCH METHOD--
@@ -160,6 +163,7 @@ END
 
 TEST(SEARCH_M)
 	ASSERT_SC("ab*c+", "aaaaaabbbbaaabababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbababcccccc", "abcccccc");
+	ASSERT_SC("(?:<sec>25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])(\\.(?:<sec>)){3}", "ipv4: 192.168.1.1", "192.168.1.1");
 END
 
 
@@ -167,6 +171,7 @@ END
 
 TEST(REPLACE_M)
 	ASSERT_RP("[A-Z]+", "ABCDEFGhijklmnOPQrstUVWxyz", "_", "_hijklmn_rst_xyz");
+	ASSERT_RP("(?:<sec>25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])(\\.(?:<sec>)){3}", "ipv4: 192.168.1.1", "***.***.***.***", "ipv4: ***.***.***.***");
 END
 
 
