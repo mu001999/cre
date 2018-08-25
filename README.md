@@ -3,10 +3,7 @@ CommonRegEx, single-file
 Support ASCII
 
 ### TODO
-+ [ ] optimize redundant calculations
-+ [ ] fix bugs
-+ [ ] add detailed error message
-+ [ ] beautify the code
++ [ ] add detailed error messages
 
 ### SYNTAX
 

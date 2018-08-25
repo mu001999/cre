@@ -3,6 +3,7 @@
 
 
 #include <set>
+#include <tuple>
 #include <cctype>
 #include <string>
 #include <vector>
@@ -455,13 +456,17 @@ namespace cre
     };
 
 
-    class Pattern
+    static std::tuple<std::shared_ptr<DFAState>, bool, bool> gen_dfa(const char *reading)
     {
-    private:
-
         std::unordered_map<std::string, std::shared_ptr<Node>> ref_map;
+        std::shared_ptr<DFAState> dfa;
+        bool begin = false, end = false;
 
-        char translate_escape_chr(const char *&reading)
+        std::function<char(const char *&)> translate_escape_chr;
+        std::function<std::bitset<128>(char &, const char *&, bool range)> translate_echr2bset;
+        std::function<std::shared_ptr<Node>(const char *&)> translate_echr2node, gen_bracket, gen_subexpr, gen_node;
+
+        translate_escape_chr = [&](const char *&reading)
         {
             ++reading;
             if (*reading)
@@ -481,7 +486,7 @@ namespace cre
                     if (*(reading+1) && (isalpha(*(reading+1)) || (*(reading + 1) > 63 && *(reading + 1) < 94)))
                     {
                         ++reading;
-                        return toupper(*(reading+1)) - 64;
+                        return static_cast<char>(toupper(*(reading+1)) - 64);
                     }
                     else return 'c';
                 default: return *reading;
@@ -490,11 +495,11 @@ namespace cre
             else
             {
                 std::cout << "cre syntax error: only '\\'" << std::endl;
-                return -1;
+                return static_cast<char>(-1);
             }
-        }
+        };
 
-        std::bitset<128> translate_echr2bset(char &left, const char *&reading, bool range = true)
+        translate_echr2bset = [&](char &left, const char *&reading, bool range)
         {
             char res = translate_escape_chr(reading);
             std::bitset<128> ret;
@@ -503,9 +508,9 @@ namespace cre
             else left = res;
             if (!range && ECMAP.count(res)) left = -1;
             return ret;
-        }
+        };
 
-        std::shared_ptr<Node> translate_echr2node(const char *&reading)
+        translate_echr2node = [&](const char *&reading)
         {
             std::shared_ptr<Node> node = nullptr;
             char left = -1;
@@ -513,9 +518,9 @@ namespace cre
             if (left == -1) node = std::make_shared<BracketNode>(res);
             else node = std::make_shared<LeafNode>(left);
             return node;
-        }
+        };
 
-        std::shared_ptr<Node> gen_bracket(const char *&reading)
+        gen_bracket = [&](const char *&reading)
         {
             char left = -1;
             bool range = false, exclude = false;
@@ -526,7 +531,7 @@ namespace cre
                 ++reading;
                 exclude = true;
             }
-            if (*reading == ']') return nullptr;
+            if (*reading == ']') return std::make_shared<BracketNode>(chrs);
 
             while (*reading && *reading != ']')
             {
@@ -537,7 +542,7 @@ namespace cre
                 }
                 else if (range)
                 {
-                    if (*reading == '\\') chrs |= translate_echr2bset(left, reading);
+                    if (*reading == '\\') chrs |= translate_echr2bset(left, reading, true);
                     else for (; left <= *reading; ++left) chrs.set(left);
                     left = -1;
                     range = false;
@@ -556,9 +561,9 @@ namespace cre
             if (exclude) chrs.flip();
 
             return std::make_shared<BracketNode>(chrs);
-        }
+        };
 
-        std::shared_ptr<Node> gen_subexpr(const char *&reading)
+        gen_subexpr = [&](const char *&reading)
         {
             std::shared_ptr<Node> node = nullptr;
             if (*reading == '?')
@@ -585,9 +590,9 @@ namespace cre
             }
             else node = gen_node(reading);
             return node;
-        }
+        };
 
-        std::shared_ptr<Node> gen_node(const char *&reading)
+        gen_node = [&](const char *&reading)
         {
             std::shared_ptr<Node> node = nullptr, right = nullptr;
 
@@ -689,7 +694,18 @@ namespace cre
                 end = true;
             }
             return node;
-        }
+        };
+
+        auto node = gen_node(reading);
+        if (!node) dfa = std::make_shared<DFAState>(DFAState::StateType::END);
+        else dfa = node->compile()->to_dfa();
+        return std::make_tuple(dfa, begin, end);
+    }
+
+
+    class Pattern
+    {
+    private:
 
         void cal_next()
         {
@@ -731,16 +747,13 @@ namespace cre
 
         std::shared_ptr<DFAState> dfa;
         std::unordered_map<std::shared_ptr<DFAState>, std::shared_ptr<DFAState>> next;
-        bool begin = false, end = false;
+        bool begin, end;
 
     public:
 
         Pattern(const std::string pattern)
         {
-            auto reading = pattern.c_str();
-            auto node = gen_node(reading);
-            if (!node) dfa = std::make_shared<DFAState>(DFAState::StateType::END);
-            else dfa = node->compile()->to_dfa();
+            std::tie(dfa, begin, end) = gen_dfa(pattern.c_str());
             cal_next();
         }
 
