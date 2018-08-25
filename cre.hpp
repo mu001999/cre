@@ -18,28 +18,23 @@ namespace cre
 {
 
     static std::bitset<128> SPACES(0X100003e00ULL);
-    static std::bitset<128> NOT_SPACES = ~SPACES;
-    static std::bitset<128> LWORDS("111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-    static std::bitset<128> NOT_LWORDS = ~LWORDS;
-    static std::bitset<128> UWORDS("1111111111111111111111111100000000000000000000000000000000000000000000000000000000000000000");
-    static std::bitset<128> NOT_UWORDS = ~UWORDS;
-    static std::bitset<128> WORDS("111111111111111111111111110100001111111111111111111111111100000001111111111000000000000000000000000000000000000000000000000");
-    static std::bitset<128> NOT_WORDS = ~WORDS;
     static std::bitset<128> DIGITS(287948901175001088ULL);
+    static std::bitset<128> LWORDS("111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+    static std::bitset<128> UWORDS("1111111111111111111111111100000000000000000000000000000000000000000000000000000000000000000");
+    static std::bitset<128> WORD_S("111111111111111111111111110100001111111111111111111111111100000001111111111000000000000000000000000000000000000000000000000");
+    static std::bitset<128> NOT_SPACES = ~SPACES;
     static std::bitset<128> NOT_DIGITS = ~DIGITS;
+    static std::bitset<128> NOT_LWORDS = ~LWORDS;
+    static std::bitset<128> NOT_UWORDS = ~UWORDS;
+    static std::bitset<128> NOT_WORD_S = ~WORD_S;
 
     static std::unordered_map<char, std::bitset<128>> ECMAP =
     {
-        {'s', SPACES},
-        {'S', NOT_SPACES},
-        {'l', LWORDS},
-        {'L', NOT_LWORDS},
-        {'u', UWORDS},
-        {'U', NOT_UWORDS},
-        {'w', WORDS},
-        {'W', NOT_WORDS},
-        {'d', DIGITS},
-        {'D', NOT_DIGITS}
+        {'s', SPACES}, {'S', NOT_SPACES},
+        {'d', DIGITS}, {'D', NOT_DIGITS},
+        {'l', LWORDS}, {'L', NOT_LWORDS},
+        {'u', UWORDS}, {'U', NOT_UWORDS},
+        {'w', WORD_S}, {'W', NOT_WORD_S}
     };
 
 
@@ -87,27 +82,26 @@ namespace cre
 
         std::set<std::shared_ptr<NFAState>> eps_closure(std::set<std::shared_ptr<NFAState>> S)
         {
-            std::function<void(std::set<std::shared_ptr<NFAState>>&, std::shared_ptr<NFAState>)> add2rS;
-            add2rS = [&](std::set<std::shared_ptr<NFAState>> &S, std::shared_ptr<NFAState> s)
+            std::function<void(std::set<std::shared_ptr<NFAState>>&, const std::shared_ptr<NFAState>&)> add2rS;
+            add2rS = [&](std::set<std::shared_ptr<NFAState>> &S, const std::shared_ptr<NFAState> &s)
             {
-                if (S.count(s)) return;
                 S.insert(s);
                 if (s->edge_type == NFAState::EdgeType::EPSILON)
                 {
-                    add2rS(S, s->next);
-                    if (s->next2) add2rS(S, s->next2);
+                    if (!S.count(s->next)) add2rS(S, s->next);
+                    if (s->next2 && !S.count(s->next2)) add2rS(S, s->next2);
                 }
             };
 
             std::set<std::shared_ptr<NFAState>> rS;
-            for (auto s: S) add2rS(rS, s);
+            for (auto &s: S) add2rS(rS, s);
             return rS;
         }
 
-        std::set<std::shared_ptr<NFAState>> delta(std::set<std::shared_ptr<NFAState>> q, char c)
+        std::set<std::shared_ptr<NFAState>> delta(std::set<std::shared_ptr<NFAState>> &q, char c)
         {
             std::set<std::shared_ptr<NFAState>> rq;
-            for (auto s: q) if (s->edge_type == NFAState::EdgeType::CCL && s->input_set[c]) rq.insert(s->next);
+            for (auto &s: q) if (s->edge_type == NFAState::EdgeType::CCL && s->input_set[c]) rq.insert(s->next);
             return rq;
         }
 
@@ -211,11 +205,10 @@ namespace cre
         std::shared_ptr<DFAState> to_dfa()
         {
             auto q0 = eps_closure({start});
-            std::vector<std::set<std::shared_ptr<NFAState>>> Q = {q0};
-            auto work_list = Q;
-            std::vector<std::shared_ptr<DFAState>> mp = { std::make_shared<DFAState>((std::find(q0.begin(), q0.end(), end) != q0.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL)};
+            std::vector<std::set<std::shared_ptr<NFAState>>> Q = {q0}, work_list = {q0};
+            std::vector<std::shared_ptr<DFAState>> mp = {std::make_shared<DFAState>((std::find(q0.begin(), q0.end(), end) != q0.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL)};
 
-            while (!work_list.empty())
+            while (work_list.size())
             {
                 auto q = work_list.back();
                 work_list.pop_back();
@@ -223,30 +216,16 @@ namespace cre
                 {
                     auto t = eps_closure(delta(q, c));
                     if (t.empty()) continue;
-                    for (int i = 0; i < Q.size(); ++i)
+                    for (int i = 0, j = -1; i < Q.size() && j == -1; ++i) if (Q[i] == q)
                     {
-                        if (Q[i] == q)
+                        while (++j < Q.size()) if (Q[j] == t && (mp[i]->to[c] = mp[j]) == mp[j]) break;
+
+                        if (j == Q.size())
                         {
-                            int j = -1;
-
-                            while (++j < Q.size())
-                            {
-                                if (Q[j] == t)
-                                {
-                                    mp[i]->to[c] = mp[j];
-                                    break;
-                                }
-                            }
-
-                            if (j == Q.size())
-                            {
-                                Q.push_back(t);
-                                work_list.push_back(t);
-                                mp.push_back(std::make_shared<DFAState>((std::find(t.begin(), t.end(), end) != t.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL));
-                                mp[i]->to[c] = mp.back();
-                            }
-
-                            break;
+                            Q.push_back(t);
+                            work_list.push_back(t);
+                            mp.push_back(std::make_shared<DFAState>((std::find(t.begin(), t.end(), end) != t.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL));
+                            mp[i]->to[c] = mp.back();
                         }
                     }
                 }
@@ -294,8 +273,7 @@ namespace cre
     {
     private:
 
-        std::shared_ptr<Node> left;
-        std::shared_ptr<Node> right;
+        std::shared_ptr<Node> left, right;
 
     public:
 
@@ -318,8 +296,7 @@ namespace cre
     {
     private:
 
-        std::shared_ptr<Node> left;
-        std::shared_ptr<Node> right;
+        std::shared_ptr<Node> left, right;
 
     public:
 
@@ -463,7 +440,6 @@ namespace cre
     public:
 
         BracketNode(std::bitset<128> chrs) : chrs(chrs) {}
-
         virtual std::shared_ptr<NFAPair> compile()
         {
             auto ptr = std::make_shared<NFAPair>();
@@ -513,7 +489,7 @@ namespace cre
             }
             else
             {
-                std::cout << "cre syntax error: only '\'" << std::endl;
+                std::cout << "cre syntax error: only '\\'" << std::endl;
                 return -1;
             }
         }
