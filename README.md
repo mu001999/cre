@@ -1,6 +1,8 @@
 CommonRegEx, single-file
 
-Support ASCII
+Supports ASCII code, it can guarantee the correct operation when the input is correct, and the running result is not guaranteed when the input is wrong.
+
+---
 
 ### TODO
 + [ ] add detailed error messages
