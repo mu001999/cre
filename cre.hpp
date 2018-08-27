@@ -4,6 +4,7 @@
 
 #include <set>
 #include <tuple>
+#include <cstdio>
 #include <cctype>
 #include <string>
 #include <vector>
@@ -460,6 +461,7 @@ namespace cre
         std::unordered_map<std::string, std::shared_ptr<Node>> ref_map;
         std::shared_ptr<DFAState> dfa;
         bool begin = false, end = false;
+        auto begin_address = reading;
 
         std::function<char(const char *&)> translate_escape_chr;
         std::function<std::bitset<128>(char &, const char *&, bool range)> translate_echr2bset;
@@ -493,7 +495,7 @@ namespace cre
             }
             else
             {
-                std::cout << "cre syntax error: only '\\'" << std::endl;
+                printf("cre syntax error at pos %d: only '\\'\n", reading - begin_address);
                 return static_cast<char>(-1);
             }
         };
@@ -536,7 +538,7 @@ namespace cre
             {
                 if (*reading == '-')
                 {
-                    if (range || left == -1) std::cout << "cre syntax error: incorrect position of '-'" << std::endl;
+                    if (range || left == -1) printf("cre syntax error at pos %d: incorrect position of '-'\n", reading - begin_address);
                     else range = true;
                 }
                 else if (range)
@@ -569,17 +571,17 @@ namespace cre
             {
                 ++reading;
                 if (*reading == ':') ++reading;
-                else std::cout << "cre syntax error: missing ':'" << std::endl;
+                else printf("cre syntax error at pos %d: missing ':'\n", reading - begin_address);
                 if (*reading == '<') ++reading;
-                else std::cout << "cre syntax error: missing '<'" << std::endl;
+                else printf("cre syntax error at pos %d: missing '<'\n", reading - begin_address);
                 std::string name;
                 while (isalnum(*reading) || *reading == '_') name += *reading++;
                 if (*reading == '>') ++reading;
-                else std::cout << "cre syntax error: missing '>'" << std::endl;
+                else printf("cre syntax error at pos %d: missing '>'\n", reading - begin_address);
                 if (*reading == ')')
                 {
                     if (ref_map.count(name)) return ref_map[name];
-                    else std::cout << "cre error: can't find ref to " << name << std::endl;
+                    else printf("cre syntax error at pos %d: can't find ref to %s\n", reading - begin_address, name.c_str());
                 }
                 else
                 {
@@ -598,7 +600,7 @@ namespace cre
             if (*reading == '^')
             {
                 ++reading;
-                if (begin) std::cout << "cre syntax error: '^' should be the begin of pattern string" << std::endl;
+                if (begin) printf("cre syntax error at pos %d: '^' should be the begin of pattern string\n", reading - begin_address);
                 begin = true;
             }
 
@@ -606,13 +608,13 @@ namespace cre
             {
                 ++reading;
                 node = gen_subexpr(reading);
-                if (*reading != ')') std::cout << "cre syntax error: missing ')'" << std::endl;
+                if (*reading != ')') printf("cre syntax error at pos %d: missing ')'\n", reading - begin_address);
             }
             else if (*reading == '[')
             {
                 ++reading;
                 node = gen_bracket(reading);
-                if (*reading != ']') std::cout << "cre syntax error: missing ']'" << std::endl;
+                if (*reading != ']') printf("cre syntax error at pos %d: missing ']'\n", reading - begin_address);
             }
             else if (*reading == '.') node = std::make_shared<DotNode>();
             else if (*reading && *reading != '|' && *reading != ')') node = *reading == '\\' ? translate_echr2node(reading) : std::make_shared<LeafNode>(*reading);
@@ -628,13 +630,13 @@ namespace cre
                     ++reading;
                     if (right) node = std::make_shared<CatNode>(node, right);
                     right = gen_subexpr(reading);
-                    if (*reading != ')') std::cout << "cre syntax error: missing ')'" << std::endl;
+                    if (*reading != ')') printf("cre syntax error at pos %d: missing ')'\n", reading - begin_address);
                     break;
                 case '[':
                     ++reading;
                     if (right) node = std::make_shared<CatNode>(node, right);
                     right = gen_bracket(reading);
-                    if (*reading != ']') std::cout << "cre syntax error: missing ']'" << std::endl;
+                    if (*reading != ']') printf("cre syntax error at pos %d: missing ']'\n", reading - begin_address);
                     break;
                 case '{':
                     ++reading;
@@ -650,9 +652,9 @@ namespace cre
 
                         if (right) right = std::make_shared<QualifierNode>(right, n, m);
                         else node = std::make_shared<QualifierNode>(node, n, m);
-                        if (*reading != '}') std::cout << "cre syntax error: missing '}'" << std::endl;
+                        if (*reading != '}') printf("cre syntax error at pos %d: missing '}'\n", reading - begin_address);
                     }
-                    else std::cout << "cre syntax error: only '{' & no number after '{'" << std::endl;
+                    else printf("cre syntax error at pos %d: only '{' & no number after '{'\n", reading - begin_address);
                     break;
                 case '*':
                     if (right) right = std::make_shared<ClosureNode>(right);
@@ -689,7 +691,7 @@ namespace cre
             if (*reading == '$')
             {
                 ++reading;
-                if (end) std::cout << "cre syntax error: '$' should be the end of the pattern string" << std::endl;
+                if (end) printf("cre syntax error at pos %d: '$' should be the end of the pattern string\n", reading - begin_address);
                 end = true;
             }
             return node;
