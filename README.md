@@ -4,9 +4,6 @@ Supports ASCII code, it can guarantee the correct operation when the input is co
 
 ---
 
-### TODO
-+ [ ] add detailed error messages
-
 ### SYNTAX
 
 Metacharacter   | Description
