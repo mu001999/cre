@@ -9,7 +9,6 @@
 #include <vector>
 #include <memory>
 #include <bitset>
-#include <iostream>
 #include <algorithm>
 #include <functional>
 #include <unordered_map>
@@ -366,8 +365,8 @@ namespace cre
             std::shared_ptr<NFAPair> ptr = std::make_shared<NFAPair>();
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
 
-            // -2 means {n}, -1 means {n,}
-            if (m == -2) // for {n}
+            // -2 means '{n}', -1 means '{n,}', >=0 means '{n,m}'
+            if (m == -2) // for '{n}'
             {
                 std::shared_ptr<Node> temp = (n > 0) ? content : nullptr;
                 for (int i = 1; i < n; ++i) temp = std::make_shared<CatNode>(temp, content);
@@ -378,13 +377,13 @@ namespace cre
                     ptr->start->next = ptr->end;
                 }
             }
-            else if (m == -1) // for {n,}
+            else if (m == -1) // for '{n,}'
             {
                 std::shared_ptr<Node> temp = (n > 0) ? content : nullptr;
                 for (int i = 1; i < n; ++i) temp = std::make_shared<CatNode>(temp, content);
                 return temp ? std::make_shared<CatNode>(temp, std::make_shared<ClosureNode>(content))->compile() : std::make_shared<ClosureNode>(content)->compile();
             }
-            else if (n < m && n >= 0) // for {n,m}
+            else if (n < m && n >= 0) // for '{n,m}'
             {
                 auto first = content->compile();
                 auto pre = first;
