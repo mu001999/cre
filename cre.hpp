@@ -1,5 +1,5 @@
-#ifndef _CRE_H_
-#define _CRE_H_
+#ifndef __CRE_H__
+#define __CRE_H__
 
 
 #include <set>
@@ -868,4 +868,4 @@ namespace cre
 
 }
 
-#endif // _CRE_H_
+#endif // __CRE_H__
