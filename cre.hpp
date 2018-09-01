@@ -18,18 +18,18 @@
 namespace cre
 {
 
-    static std::bitset<128> SPACES(0X100003e00ULL);
-    static std::bitset<128> DIGITS(287948901175001088ULL);
-    static std::bitset<128> LWORDS("111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-    static std::bitset<128> UWORDS("1111111111111111111111111100000000000000000000000000000000000000000000000000000000000000000");
-    static std::bitset<128> WORD_S("111111111111111111111111110100001111111111111111111111111100000001111111111000000000000000000000000000000000000000000000000");
-    static std::bitset<128> NOT_SPACES = ~SPACES;
-    static std::bitset<128> NOT_DIGITS = ~DIGITS;
-    static std::bitset<128> NOT_LWORDS = ~LWORDS;
-    static std::bitset<128> NOT_UWORDS = ~UWORDS;
-    static std::bitset<128> NOT_WORD_S = ~WORD_S;
+    static ::std::bitset<128> SPACES(0X100003e00ULL);
+    static ::std::bitset<128> DIGITS(287948901175001088ULL);
+    static ::std::bitset<128> LWORDS("111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+    static ::std::bitset<128> UWORDS("1111111111111111111111111100000000000000000000000000000000000000000000000000000000000000000");
+    static ::std::bitset<128> WORD_S("111111111111111111111111110100001111111111111111111111111100000001111111111000000000000000000000000000000000000000000000000");
+    static ::std::bitset<128> NOT_SPACES = ~SPACES;
+    static ::std::bitset<128> NOT_DIGITS = ~DIGITS;
+    static ::std::bitset<128> NOT_LWORDS = ~LWORDS;
+    static ::std::bitset<128> NOT_UWORDS = ~UWORDS;
+    static ::std::bitset<128> NOT_WORD_S = ~WORD_S;
 
-    static std::unordered_map<char, std::bitset<128>> ECMAP =
+    static ::std::unordered_map<char, ::std::bitset<128>> ECMAP =
     {
         {'s', SPACES}, {'S', NOT_SPACES},
         {'d', DIGITS}, {'D', NOT_DIGITS},
@@ -50,9 +50,9 @@ namespace cre
             EMPTY
         } edge_type;
 
-        std::bitset<128> input_set;
-        std::shared_ptr<NFAState> next;
-        std::shared_ptr<NFAState> next2;
+        ::std::bitset<128> input_set;
+        ::std::shared_ptr<NFAState> next;
+        ::std::shared_ptr<NFAState> next2;
 
         NFAState() : next(nullptr), next2(nullptr) {}
 
@@ -69,7 +69,7 @@ namespace cre
             END
         } state_type;
 
-        std::unordered_map<char, std::shared_ptr<DFAState>> to;
+        ::std::unordered_map<char, ::std::shared_ptr<DFAState>> to;
 
         DFAState() : state_type(StateType::NORMAL) {}
         DFAState(StateType type) : state_type(type) {}
@@ -81,10 +81,10 @@ namespace cre
     {
     private:
 
-        std::set<std::shared_ptr<NFAState>> eps_closure(std::set<std::shared_ptr<NFAState>> S)
+        ::std::set<::std::shared_ptr<NFAState>> eps_closure(::std::set<::std::shared_ptr<NFAState>> S)
         {
-            std::function<void(std::set<std::shared_ptr<NFAState>>&, const std::shared_ptr<NFAState>&)> add2rS;
-            add2rS = [&](std::set<std::shared_ptr<NFAState>> &S, const std::shared_ptr<NFAState> &s)
+            ::std::function<void(::std::set<::std::shared_ptr<NFAState>>&, const ::std::shared_ptr<NFAState>&)> add2rS;
+            add2rS = [&](::std::set<::std::shared_ptr<NFAState>> &S, const ::std::shared_ptr<NFAState> &s)
             {
                 S.insert(s);
                 if (s->edge_type == NFAState::EdgeType::EPSILON)
@@ -94,41 +94,41 @@ namespace cre
                 }
             };
 
-            std::set<std::shared_ptr<NFAState>> rS;
+            ::std::set<::std::shared_ptr<NFAState>> rS;
             for (auto &s: S) add2rS(rS, s);
             return rS;
         }
 
-        std::set<std::shared_ptr<NFAState>> delta(std::set<std::shared_ptr<NFAState>> &q, char c)
+        ::std::set<::std::shared_ptr<NFAState>> delta(::std::set<::std::shared_ptr<NFAState>> &q, char c)
         {
-            std::set<std::shared_ptr<NFAState>> rq;
+            ::std::set<::std::shared_ptr<NFAState>> rq;
             for (auto &s: q) if (s->edge_type == NFAState::EdgeType::CCL && s->input_set[c]) rq.insert(s->next);
             return rq;
         }
 
-        std::shared_ptr<DFAState> dfa_minimization(std::vector<std::shared_ptr<DFAState>> &mp)
+        ::std::shared_ptr<DFAState> dfa_minimization(::std::vector<::std::shared_ptr<DFAState>> &mp)
         {
-            std::set<std::set<int>> T;
+            ::std::set<::std::set<int>> T;
             auto P = T;
 
-            auto indexof_inmp = [&](std::shared_ptr<DFAState> state)
+            auto indexof_inmp = [&](::std::shared_ptr<DFAState> state)
             {
                 for (int i = 0; i < mp.size(); ++i) if (mp[i] == state) return i;
                 return -1;
             };
 
             {
-                std::vector<std::set<int>> _T = {{}, {}};
+                ::std::vector<::std::set<int>> _T = {{}, {}};
                 for (int i = 0; i < mp.size(); ++i) _T[mp[i]->state_type == DFAState::StateType::END].insert(i);
                 T.insert(_T[0]); T.insert(_T[1]);
             }
 
-            auto split = [&](const std::set<int> &S)
+            auto split = [&](const ::std::set<int> &S)
             {
-                std::vector<std::set<int>> res = {S};
+                ::std::vector<::std::set<int>> res = {S};
                 for (char c = static_cast<char>(0); c >= 0; ++c)
                 {
-                    std::set<int> s1, s2;
+                    ::std::set<int> s1, s2;
                     auto flag_it = P.end();
                     for (auto i: S)
                     {
@@ -168,15 +168,15 @@ namespace cre
                 for (auto &p: P) for (auto &_p: split(p)) T.insert(_p);
             }
 
-            std::vector<std::shared_ptr<DFAState>> states;
-            for (auto &_: T) states.push_back(std::make_shared<DFAState>());
-            std::shared_ptr<DFAState> start = nullptr;
+            ::std::vector<::std::shared_ptr<DFAState>> states;
+            for (auto &_: T) states.push_back(::std::make_shared<DFAState>());
+            ::std::shared_ptr<DFAState> start = nullptr;
 
             {
-                std::vector<std::set<int>> P;
+                ::std::vector<::std::set<int>> P;
                 for (auto &t: T) P.push_back(t);
 
-                auto indexof_inp = [&](std::shared_ptr<DFAState> state)
+                auto indexof_inp = [&](::std::shared_ptr<DFAState> state)
                 {
                     for (int i = 0, k = indexof_inmp(state); i < P.size(); ++i) if (P[i].count(k)) return i;
                     return -1;
@@ -197,17 +197,17 @@ namespace cre
 
     public:
 
-        std::shared_ptr<NFAState> start;
-        std::shared_ptr<NFAState> end;
+        ::std::shared_ptr<NFAState> start;
+        ::std::shared_ptr<NFAState> end;
 
-        NFAPair() : start(std::make_shared<NFAState>()), end(std::make_shared<NFAState>()) {}
-        NFAPair(std::shared_ptr<NFAState> start, std::shared_ptr<NFAState> end) : start(start), end(end) {}
+        NFAPair() : start(::std::make_shared<NFAState>()), end(::std::make_shared<NFAState>()) {}
+        NFAPair(::std::shared_ptr<NFAState> start, ::std::shared_ptr<NFAState> end) : start(start), end(end) {}
 
-        std::shared_ptr<DFAState> to_dfa()
+        ::std::shared_ptr<DFAState> to_dfa()
         {
             auto q0 = eps_closure({start});
-            std::vector<std::set<std::shared_ptr<NFAState>>> Q = {q0}, work_list = {q0};
-            std::vector<std::shared_ptr<DFAState>> mp = {std::make_shared<DFAState>((std::find(q0.begin(), q0.end(), end) != q0.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL)};
+            ::std::vector<::std::set<::std::shared_ptr<NFAState>>> Q = {q0}, work_list = {q0};
+            ::std::vector<::std::shared_ptr<DFAState>> mp = {::std::make_shared<DFAState>((::std::find(q0.begin(), q0.end(), end) != q0.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL)};
 
             while (work_list.size())
             {
@@ -225,7 +225,7 @@ namespace cre
                         {
                             Q.push_back(t);
                             work_list.push_back(t);
-                            mp.push_back(std::make_shared<DFAState>((std::find(t.begin(), t.end(), end) != t.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL));
+                            mp.push_back(::std::make_shared<DFAState>((::std::find(t.begin(), t.end(), end) != t.end()) ? DFAState::StateType::END : DFAState::StateType::NORMAL));
                             mp[i]->to[c] = mp.back();
                         }
                     }
@@ -243,7 +243,7 @@ namespace cre
     public:
 
         virtual ~Node() {}
-        virtual std::shared_ptr<NFAPair> compile() = 0;
+        virtual ::std::shared_ptr<NFAPair> compile() = 0;
 
     };
 
@@ -256,9 +256,9 @@ namespace cre
     public:
 
         LeafNode(char c) : leaf(c) {}
-        virtual std::shared_ptr<NFAPair> compile()
+        virtual ::std::shared_ptr<NFAPair> compile()
         {
-            auto ptr = std::make_shared<NFAPair>();
+            auto ptr = ::std::make_shared<NFAPair>();
 
             ptr->start->edge_type = NFAState::EdgeType::CCL;
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
@@ -274,16 +274,16 @@ namespace cre
     {
     private:
 
-        std::shared_ptr<Node> left, right;
+        ::std::shared_ptr<Node> left, right;
 
     public:
 
-        CatNode(std::shared_ptr<Node> left, std::shared_ptr<Node> right) : left(left), right(right) {}
-        virtual std::shared_ptr<NFAPair> compile()
+        CatNode(::std::shared_ptr<Node> left, ::std::shared_ptr<Node> right) : left(left), right(right) {}
+        virtual ::std::shared_ptr<NFAPair> compile()
         {
             auto left = this->left->compile();
             auto right = this->right->compile();
-            auto ptr = std::make_shared<NFAPair>(left->start, right->end);
+            auto ptr = ::std::make_shared<NFAPair>(left->start, right->end);
 
             left->end->edge_type = NFAState::EdgeType::EPSILON;
             left->end->next = right->start;
@@ -297,16 +297,16 @@ namespace cre
     {
     private:
 
-        std::shared_ptr<Node> left, right;
+        ::std::shared_ptr<Node> left, right;
 
     public:
 
-        SelectNode(std::shared_ptr<Node> left, std::shared_ptr<Node> right) : left(left), right(right) {}
-        virtual std::shared_ptr<NFAPair> compile()
+        SelectNode(::std::shared_ptr<Node> left, ::std::shared_ptr<Node> right) : left(left), right(right) {}
+        virtual ::std::shared_ptr<NFAPair> compile()
         {
             auto left = this->left->compile();
             auto right = this->right->compile();
-            auto ptr = std::make_shared<NFAPair>();
+            auto ptr = ::std::make_shared<NFAPair>();
 
             ptr->start->edge_type = NFAState::EdgeType::EPSILON;
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
@@ -327,15 +327,15 @@ namespace cre
     {
     private:
 
-        std::shared_ptr<Node> content;
+        ::std::shared_ptr<Node> content;
 
     public:
 
-        ClosureNode(std::shared_ptr<Node> content) : content(content) {}
-        virtual std::shared_ptr<NFAPair> compile()
+        ClosureNode(::std::shared_ptr<Node> content) : content(content) {}
+        virtual ::std::shared_ptr<NFAPair> compile()
         {
             auto content = this->content->compile();
-            auto ptr = std::make_shared<NFAPair>();
+            auto ptr = ::std::make_shared<NFAPair>();
 
             ptr->start->edge_type = NFAState::EdgeType::EPSILON;
             ptr->start->next = content->start;
@@ -355,22 +355,22 @@ namespace cre
     {
     private:
 
-        std::shared_ptr<Node> content;
+        ::std::shared_ptr<Node> content;
         int n, m;
 
     public:
 
-        QualifierNode(std::shared_ptr<Node> content, int n, int m) : content(content), n(n), m(m) {}
-        virtual std::shared_ptr<NFAPair> compile()
+        QualifierNode(::std::shared_ptr<Node> content, int n, int m) : content(content), n(n), m(m) {}
+        virtual ::std::shared_ptr<NFAPair> compile()
         {
-            std::shared_ptr<NFAPair> ptr = std::make_shared<NFAPair>();
+            ::std::shared_ptr<NFAPair> ptr = ::std::make_shared<NFAPair>();
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
 
             // -2 means '{n}', -1 means '{n,}', >=0 means '{n,m}'
             if (m == -2) // for '{n}'
             {
-                std::shared_ptr<Node> temp = (n > 0) ? content : nullptr;
-                for (int i = 1; i < n; ++i) temp = std::make_shared<CatNode>(temp, content);
+                ::std::shared_ptr<Node> temp = (n > 0) ? content : nullptr;
+                for (int i = 1; i < n; ++i) temp = ::std::make_shared<CatNode>(temp, content);
                 if (temp) return temp->compile();
                 else
                 {
@@ -380,9 +380,9 @@ namespace cre
             }
             else if (m == -1) // for '{n,}'
             {
-                std::shared_ptr<Node> temp = (n > 0) ? content : nullptr;
-                for (int i = 1; i < n; ++i) temp = std::make_shared<CatNode>(temp, content);
-                return temp ? std::make_shared<CatNode>(temp, std::make_shared<ClosureNode>(content))->compile() : std::make_shared<ClosureNode>(content)->compile();
+                ::std::shared_ptr<Node> temp = (n > 0) ? content : nullptr;
+                for (int i = 1; i < n; ++i) temp = ::std::make_shared<CatNode>(temp, content);
+                return temp ? ::std::make_shared<CatNode>(temp, ::std::make_shared<ClosureNode>(content))->compile() : ::std::make_shared<ClosureNode>(content)->compile();
             }
             else if (n < m && n >= 0) // for '{n,m}'
             {
@@ -418,9 +418,9 @@ namespace cre
     {
     public:
 
-        virtual std::shared_ptr<NFAPair> compile()
+        virtual ::std::shared_ptr<NFAPair> compile()
         {
-            auto ptr = std::make_shared<NFAPair>();
+            auto ptr = ::std::make_shared<NFAPair>();
 
             ptr->start->edge_type = NFAState::EdgeType::CCL;
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
@@ -436,14 +436,14 @@ namespace cre
     {
     private:
 
-        std::bitset<128> chrs;
+        ::std::bitset<128> chrs;
 
     public:
 
-        BracketNode(std::bitset<128> chrs) : chrs(chrs) {}
-        virtual std::shared_ptr<NFAPair> compile()
+        BracketNode(::std::bitset<128> chrs) : chrs(chrs) {}
+        virtual ::std::shared_ptr<NFAPair> compile()
         {
-            auto ptr = std::make_shared<NFAPair>();
+            auto ptr = ::std::make_shared<NFAPair>();
 
             ptr->start->edge_type = NFAState::EdgeType::CCL;
             ptr->end->edge_type = NFAState::EdgeType::EMPTY;
@@ -456,16 +456,16 @@ namespace cre
     };
 
 
-    static std::tuple<std::shared_ptr<DFAState>, bool, bool> gen_dfa(const char *reading)
+    static ::std::tuple<::std::shared_ptr<DFAState>, bool, bool> gen_dfa(const char *reading)
     {
-        std::unordered_map<std::string, std::shared_ptr<Node>> ref_map;
-        std::shared_ptr<DFAState> dfa;
+        ::std::unordered_map<::std::string, ::std::shared_ptr<Node>> ref_map;
+        ::std::shared_ptr<DFAState> dfa;
         bool begin = false, end = false;
         auto begin_address = reading;
 
-        std::function<char(const char *&)> translate_escape_chr;
-        std::function<std::bitset<128>(char &, const char *&, bool range)> translate_echr2bset;
-        std::function<std::shared_ptr<Node>(const char *&)> translate_echr2node, gen_bracket, gen_subexpr, gen_node;
+        ::std::function<char(const char *&)> translate_escape_chr;
+        ::std::function<::std::bitset<128>(char &, const char *&, bool range)> translate_echr2bset;
+        ::std::function<::std::shared_ptr<Node>(const char *&)> translate_echr2node, gen_bracket, gen_subexpr, gen_node;
 
         translate_escape_chr = [&](const char *&reading)
         {
@@ -503,7 +503,7 @@ namespace cre
         translate_echr2bset = [&](char &left, const char *&reading, bool range)
         {
             char res = translate_escape_chr(reading);
-            std::bitset<128> ret;
+            ::std::bitset<128> ret;
             if (ECMAP.count(res)) ret = ECMAP[res];
             else if (range) for (; left <= res; ++left) ret.set(left);
             else left = res;
@@ -513,11 +513,11 @@ namespace cre
 
         translate_echr2node = [&](const char *&reading)
         {
-            std::shared_ptr<Node> node = nullptr;
+            ::std::shared_ptr<Node> node = nullptr;
             char left = -1;
             auto res = translate_echr2bset(left, reading, false);
-            if (left == -1) node = std::make_shared<BracketNode>(res);
-            else node = std::make_shared<LeafNode>(left);
+            if (left == -1) node = ::std::make_shared<BracketNode>(res);
+            else node = ::std::make_shared<LeafNode>(left);
             return node;
         };
 
@@ -525,14 +525,14 @@ namespace cre
         {
             char left = -1;
             bool range = false, exclude = false;
-            std::bitset<128> chrs;
+            ::std::bitset<128> chrs;
 
             if (*reading == '^')
             {
                 ++reading;
                 exclude = true;
             }
-            if (*reading == ']') return std::make_shared<BracketNode>(chrs);
+            if (*reading == ']') return ::std::make_shared<BracketNode>(chrs);
 
             while (*reading && *reading != ']')
             {
@@ -561,12 +561,12 @@ namespace cre
 
             if (exclude) chrs.flip();
 
-            return std::make_shared<BracketNode>(chrs);
+            return ::std::make_shared<BracketNode>(chrs);
         };
 
         gen_subexpr = [&](const char *&reading)
         {
-            std::shared_ptr<Node> node = nullptr;
+            ::std::shared_ptr<Node> node = nullptr;
             if (*reading == '?')
             {
                 ++reading;
@@ -574,7 +574,7 @@ namespace cre
                 else printf("cre syntax error at pos %d: missing ':'\n", reading - begin_address);
                 if (*reading == '<') ++reading;
                 else printf("cre syntax error at pos %d: missing '<'\n", reading - begin_address);
-                std::string name;
+                ::std::string name;
                 while (isalnum(*reading) || *reading == '_') name += *reading++;
                 if (*reading == '>') ++reading;
                 else printf("cre syntax error at pos %d: missing '>'\n", reading - begin_address);
@@ -595,7 +595,7 @@ namespace cre
 
         gen_node = [&](const char *&reading)
         {
-            std::shared_ptr<Node> node = nullptr, right = nullptr;
+            ::std::shared_ptr<Node> node = nullptr, right = nullptr;
 
             if (*reading == '^')
             {
@@ -616,8 +616,8 @@ namespace cre
                 node = gen_bracket(reading);
                 if (*reading != ']') printf("cre syntax error at pos %d: missing ']'\n", reading - begin_address);
             }
-            else if (*reading == '.') node = std::make_shared<DotNode>();
-            else if (*reading && *reading != '|' && *reading != ')') node = *reading == '\\' ? translate_echr2node(reading) : std::make_shared<LeafNode>(*reading);
+            else if (*reading == '.') node = ::std::make_shared<DotNode>();
+            else if (*reading && *reading != '|' && *reading != ')') node = *reading == '\\' ? translate_echr2node(reading) : ::std::make_shared<LeafNode>(*reading);
 
             if (!node) return node;
             ++reading;
@@ -628,13 +628,13 @@ namespace cre
                 {
                 case '(':
                     ++reading;
-                    if (right) node = std::make_shared<CatNode>(node, right);
+                    if (right) node = ::std::make_shared<CatNode>(node, right);
                     right = gen_subexpr(reading);
                     if (*reading != ')') printf("cre syntax error at pos %d: missing ')'\n", reading - begin_address);
                     break;
                 case '[':
                     ++reading;
-                    if (right) node = std::make_shared<CatNode>(node, right);
+                    if (right) node = ::std::make_shared<CatNode>(node, right);
                     right = gen_bracket(reading);
                     if (*reading != ']') printf("cre syntax error at pos %d: missing ']'\n", reading - begin_address);
                     break;
@@ -650,31 +650,31 @@ namespace cre
                             m = isdigit(*reading) ? *reading++ - '0' : -1;
                         }
 
-                        if (right) right = std::make_shared<QualifierNode>(right, n, m);
-                        else node = std::make_shared<QualifierNode>(node, n, m);
+                        if (right) right = ::std::make_shared<QualifierNode>(right, n, m);
+                        else node = ::std::make_shared<QualifierNode>(node, n, m);
                         if (*reading != '}') printf("cre syntax error at pos %d: missing '}'\n", reading - begin_address);
                     }
                     else printf("cre syntax error at pos %d: only '{' & no number after '{'\n", reading - begin_address);
                     break;
                 case '*':
-                    if (right) right = std::make_shared<ClosureNode>(right);
-                    else node = std::make_shared<ClosureNode>(node);
+                    if (right) right = ::std::make_shared<ClosureNode>(right);
+                    else node = ::std::make_shared<ClosureNode>(node);
                     break;
                 case '+':
-                    if (right) right = std::make_shared<QualifierNode>(right, 1, -1);
-                    else node = std::make_shared<QualifierNode>(node, 1, -1);
+                    if (right) right = ::std::make_shared<QualifierNode>(right, 1, -1);
+                    else node = ::std::make_shared<QualifierNode>(node, 1, -1);
                     break;
                 case '?':
-                    if (right) right = std::make_shared<QualifierNode>(right, 0, 1);
-                    else node = std::make_shared<QualifierNode>(node, 0, 1);
+                    if (right) right = ::std::make_shared<QualifierNode>(right, 0, 1);
+                    else node = ::std::make_shared<QualifierNode>(node, 0, 1);
                     break;
                 case '.':
-                    if (right) node = std::make_shared<CatNode>(node, right);
-                    right = std::make_shared<DotNode>();
+                    if (right) node = ::std::make_shared<CatNode>(node, right);
+                    right = ::std::make_shared<DotNode>();
                     break;
                 default:
-                    if (right) node = std::make_shared<CatNode>(node, right);
-                    right = *reading == '\\' ? translate_echr2node(reading) : std::make_shared<LeafNode>(*reading);
+                    if (right) node = ::std::make_shared<CatNode>(node, right);
+                    right = *reading == '\\' ? translate_echr2node(reading) : ::std::make_shared<LeafNode>(*reading);
                     break;
                 }
                 ++reading;
@@ -683,10 +683,10 @@ namespace cre
             if (*reading == '|')
             {
                 ++reading;
-                if (right) node = std::make_shared<CatNode>(node, right);
-                node = std::make_shared<SelectNode>(node, gen_node(reading));
+                if (right) node = ::std::make_shared<CatNode>(node, right);
+                node = ::std::make_shared<SelectNode>(node, gen_node(reading));
             }
-            else if (right) node = std::make_shared<CatNode>(node, right);
+            else if (right) node = ::std::make_shared<CatNode>(node, right);
 
             if (*reading == '$')
             {
@@ -698,9 +698,9 @@ namespace cre
         };
 
         auto node = gen_node(reading);
-        if (!node) dfa = std::make_shared<DFAState>(DFAState::StateType::END);
+        if (!node) dfa = ::std::make_shared<DFAState>(DFAState::StateType::END);
         else dfa = node->compile()->to_dfa();
-        return std::make_tuple(dfa, begin, end);
+        return ::std::make_tuple(dfa, begin, end);
     }
 
 
@@ -711,8 +711,8 @@ namespace cre
         void cal_next()
         {
             if (!dfa->to.size()) return;
-            std::set<std::shared_ptr<DFAState>> caled = {dfa};
-            std::vector<std::shared_ptr<DFAState>> states;
+            ::std::set<::std::shared_ptr<DFAState>> caled = {dfa};
+            ::std::vector<::std::shared_ptr<DFAState>> states;
             for (auto it: dfa->to) if (!caled.count(it.second))
             {
                 next[it.second] = dfa;
@@ -736,7 +736,7 @@ namespace cre
                     if (!next.count(it.second)) next[it.second] = dfa;
                 }
 
-                std::vector<std::shared_ptr<DFAState>> _ss;
+                ::std::vector<::std::shared_ptr<DFAState>> _ss;
                 for (auto state: states) for (auto it: state->to) if (!caled.count(it.second))
                 {
                     _ss.push_back(it.second);
@@ -746,22 +746,22 @@ namespace cre
             }
         }
 
-        std::shared_ptr<DFAState> dfa;
-        std::unordered_map<std::shared_ptr<DFAState>, std::shared_ptr<DFAState>> next;
+        ::std::shared_ptr<DFAState> dfa;
+        ::std::unordered_map<::std::shared_ptr<DFAState>, ::std::shared_ptr<DFAState>> next;
         bool begin, end;
 
     public:
 
-        Pattern(const std::string pattern)
+        Pattern(const ::std::string pattern)
         {
-            std::tie(dfa, begin, end) = gen_dfa(pattern.c_str());
+            ::std::tie(dfa, begin, end) = gen_dfa(pattern.c_str());
             cal_next();
         }
 
 
-        std::string match(const std::string str)
+        ::std::string match(const ::std::string str)
         {
-            std::string res, temp;
+            ::std::string res, temp;
             auto reading = str.c_str();
             auto state = dfa;
             while (*reading)
@@ -780,11 +780,11 @@ namespace cre
             return res;
         }
 
-        std::string search(const std::string str)
+        ::std::string search(const ::std::string str)
         {
             if (begin) return match(str);
-            std::unordered_map<std::shared_ptr<DFAState>, std::string> mapstr = {{dfa, ""}};
-            std::string res, temp;
+            ::std::unordered_map<::std::shared_ptr<DFAState>, ::std::string> mapstr = {{dfa, ""}};
+            ::std::string res, temp;
             auto reading = str.c_str();
             auto state = dfa;
             while (*reading)
@@ -808,11 +808,11 @@ namespace cre
             return end ? temp : res;
         }
 
-        std::string replace(const std::string str, const std::string target)
+        ::std::string replace(const ::std::string str, const ::std::string target)
         {
             if (begin) return target + str.substr(match(str).size());
-            std::unordered_map<std::shared_ptr<DFAState>, std::string> mapstr = {{dfa, ""}};
-            std::string ret, res, temp;
+            ::std::unordered_map<::std::shared_ptr<DFAState>, ::std::string> mapstr = {{dfa, ""}};
+            ::std::string ret, res, temp;
             auto reading = str.c_str();
             auto state = dfa;
             while (*reading)
@@ -851,17 +851,17 @@ namespace cre
     };
 
 
-    std::string match(const std::string pattern, const std::string str)
+    ::std::string match(const ::std::string pattern, const ::std::string str)
     {
         return Pattern(pattern).match(str);
     }
 
-    std::string search(const std::string pattern, const std::string str)
+    ::std::string search(const ::std::string pattern, const ::std::string str)
     {
         return Pattern(pattern).search(str);
     }
 
-    std::string replace(const std::string pattern, const std::string str, const std::string target)
+    ::std::string replace(const ::std::string pattern, const ::std::string str, const ::std::string target)
     {
         return Pattern(pattern).replace(str, target);
     }
