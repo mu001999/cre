@@ -168,13 +168,11 @@ namespace cre
                 for (auto &p: P) for (auto &_p: split(p)) T.insert(_p);
             }
 
-            ::std::vector<::std::shared_ptr<DFAState>> states;
-            for (auto &_: T) states.push_back(::std::make_shared<DFAState>());
+            ::std::vector<::std::shared_ptr<DFAState>> states(T.size(), ::std::make_shared<DFAState>());
             ::std::shared_ptr<DFAState> start = nullptr;
 
             {
-                ::std::vector<::std::set<int>> P;
-                for (auto &t: T) P.push_back(t);
+                ::std::vector<::std::set<int>> P(T.begin(), T.end());
 
                 auto indexof_inp = [&](::std::shared_ptr<DFAState> state)
                 {
