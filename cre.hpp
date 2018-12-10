@@ -1,5 +1,4 @@
-#ifndef __CRE_H__
-#define __CRE_H__
+#pragma once
 
 
 #include <set>
@@ -18,18 +17,18 @@
 namespace cre
 {
 
-    static ::std::bitset<128> SPACES(0X100003e00ULL);
-    static ::std::bitset<128> DIGITS(287948901175001088ULL);
-    static ::std::bitset<128> LWORDS("111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-    static ::std::bitset<128> UWORDS("1111111111111111111111111100000000000000000000000000000000000000000000000000000000000000000");
-    static ::std::bitset<128> WORD_S("111111111111111111111111110100001111111111111111111111111100000001111111111000000000000000000000000000000000000000000000000");
-    static ::std::bitset<128> NOT_SPACES = ~SPACES;
-    static ::std::bitset<128> NOT_DIGITS = ~DIGITS;
-    static ::std::bitset<128> NOT_LWORDS = ~LWORDS;
-    static ::std::bitset<128> NOT_UWORDS = ~UWORDS;
-    static ::std::bitset<128> NOT_WORD_S = ~WORD_S;
+    ::std::bitset<128> SPACES(0X100003e00ULL);
+    ::std::bitset<128> DIGITS(287948901175001088ULL);
+    ::std::bitset<128> LWORDS("111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+    ::std::bitset<128> UWORDS("1111111111111111111111111100000000000000000000000000000000000000000000000000000000000000000");
+    ::std::bitset<128> WORD_S("111111111111111111111111110100001111111111111111111111111100000001111111111000000000000000000000000000000000000000000000000");
+    ::std::bitset<128> NOT_SPACES = ~SPACES;
+    ::std::bitset<128> NOT_DIGITS = ~DIGITS;
+    ::std::bitset<128> NOT_LWORDS = ~LWORDS;
+    ::std::bitset<128> NOT_UWORDS = ~UWORDS;
+    ::std::bitset<128> NOT_WORD_S = ~WORD_S;
 
-    static ::std::unordered_map<char, ::std::bitset<128>> ECMAP =
+    ::std::unordered_map<char, ::std::bitset<128>> ECMAP =
     {
         {'s', SPACES}, {'S', NOT_SPACES},
         {'d', DIGITS}, {'D', NOT_DIGITS},
@@ -454,7 +453,7 @@ namespace cre
     };
 
 
-    static ::std::tuple<::std::shared_ptr<DFAState>, bool, bool> gen_dfa(const char *reading)
+    ::std::tuple<::std::shared_ptr<DFAState>, bool, bool> gen_dfa(const char *reading)
     {
         ::std::unordered_map<::std::string, ::std::shared_ptr<Node>> ref_map;
         ::std::shared_ptr<DFAState> dfa;
@@ -865,5 +864,3 @@ namespace cre
     }
 
 }
-
-#endif // __CRE_H__
