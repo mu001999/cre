@@ -17,8 +17,6 @@
 namespace cre
 {
     
-namespace
-{
     ::std::bitset<128> SPACES(0X100003e00ULL);
     ::std::bitset<128> DIGITS(287948901175001088ULL);
     ::std::bitset<128> LWORDS("111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
@@ -169,7 +167,8 @@ namespace
                 for (auto &p: P) for (auto &_p: split(p)) T.insert(_p);
             }
 
-            ::std::vector<::std::shared_ptr<DFAState>> states(T.size(), ::std::make_shared<DFAState>());
+            ::std::vector<::std::shared_ptr<DFAState>> states;
+            for (auto &_: T) states.push_back(::std::make_shared<DFAState>());
             ::std::shared_ptr<DFAState> start = nullptr;
 
             {
@@ -701,7 +700,6 @@ namespace
         else dfa = node->compile()->to_dfa();
         return ::std::make_tuple(dfa, begin, end);
     }
-} // end of unamed namespace
 
 
     class Pattern
