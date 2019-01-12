@@ -454,7 +454,7 @@ namespace cre
     };
 
 
-    ::std::tuple<::std::shared_ptr<DFAState>, bool, bool> gen_dfa(const char *reading)
+    inline ::std::tuple<::std::shared_ptr<DFAState>, bool, bool> gen_dfa(const char *reading)
     {
         ::std::unordered_map<::std::string, ::std::shared_ptr<Node>> ref_map;
         ::std::shared_ptr<DFAState> dfa;
@@ -849,17 +849,17 @@ namespace cre
     };
 
 
-    ::std::string match(const ::std::string pattern, const ::std::string str)
+    inline ::std::string match(const ::std::string pattern, const ::std::string str)
     {
         return Pattern(pattern).match(str);
     }
 
-    ::std::string search(const ::std::string pattern, const ::std::string str)
+    inline ::std::string search(const ::std::string pattern, const ::std::string str)
     {
         return Pattern(pattern).search(str);
     }
 
-    ::std::string replace(const ::std::string pattern, const ::std::string str, const ::std::string target)
+    inline ::std::string replace(const ::std::string pattern, const ::std::string str, const ::std::string target)
     {
         return Pattern(pattern).replace(str, target);
     }
