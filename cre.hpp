@@ -921,7 +921,7 @@ namespace cre
         return Pattern(pattern).replace(str, target);
     }
 
-    inline ::std::vector<::std::string> matches(const ::std::string &str)
+    inline ::std::vector<::std::string> matches(const ::std::string &pattern, const ::std::string &str)
     {
         return Pattern(pattern).matches(str);
     }
