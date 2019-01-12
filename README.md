@@ -54,6 +54,7 @@ Function Name | Description
 match         | attempts to match a regular expression to an entire character sequence.
 search        | attempts to match a regular expression to any part of a character sequence.
 replace       | replaces occurrences of a regular expression with formatted replacement text.
+matches       | attempts to match a regular expression to some entire character sequences.
 
 ###### Examples
 
@@ -65,6 +66,7 @@ auto pattern = cre::Pattern("(?:<sec>25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0
 auto match_result = pattern.match("192.168.1.1");
 auto search_result = pattern.search("ipv4 address: 123.123.123.123");
 auto replace_result = pattern.replace("ipv4 address: 123.123.123.123", "***.***.***.***");
+auto matches_result = pattern.matches("<meta test1> <meta test2>");
 ```
 
 ```cpp
@@ -74,4 +76,5 @@ auto replace_result = pattern.replace("ipv4 address: 123.123.123.123", "***.***.
 auto match_result = cre::match("(?:<sec>25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])(\\.(?:<sec>)){3}", "192.168.1.1");
 auto search_result = cre::search("(?:<sec>25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])(\\.(?:<sec>)){3}", "ipv4 address: 123.123.123.123");
 auto replace_result = cre::replace("(?:<sec>25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])(\\.(?:<sec>)){3}", "ipv4 address: 123.123.123.123", "***.***.***.***");
+auto matches_result = cre::matches("<meta[^>]*>", "<meta test1> <meta test2>");
 ```
