@@ -50,8 +50,7 @@ namespace cre
         } edge_type;
 
         ::std::bitset<128> input_set;
-        ::std::shared_ptr<NFAState> next;
-        ::std::shared_ptr<NFAState> next2;
+        ::std::shared_ptr<NFAState> next, next2;
 
         NFAState() : next(nullptr), next2(nullptr) {}
 
@@ -86,6 +85,7 @@ namespace cre
             add2rS = [&](::std::set<::std::shared_ptr<NFAState>> &S, const ::std::shared_ptr<NFAState> &s)
             {
                 S.insert(s);
+
                 if (s->edge_type == NFAState::EdgeType::EPSILON)
                 {
                     if (!S.count(s->next)) add2rS(S, s->next);
@@ -94,21 +94,24 @@ namespace cre
             };
 
             ::std::set<::std::shared_ptr<NFAState>> rS;
+
             for (auto &s: S) add2rS(rS, s);
+
             return rS;
         }
 
         ::std::set<::std::shared_ptr<NFAState>> delta(::std::set<::std::shared_ptr<NFAState>> &q, char c)
         {
             ::std::set<::std::shared_ptr<NFAState>> rq;
+
             for (auto &s: q) if (s->edge_type == NFAState::EdgeType::CCL && s->input_set[c]) rq.insert(s->next);
+
             return rq;
         }
 
         ::std::shared_ptr<DFAState> dfa_minimization(::std::vector<::std::shared_ptr<DFAState>> &mp)
         {
-            ::std::set<::std::set<int>> T;
-            auto P = T;
+            ::std::set<::std::set<int>> T, P;
 
             auto indexof_inmp = [&](::std::shared_ptr<DFAState> state)
             {
@@ -118,17 +121,22 @@ namespace cre
 
             {
                 ::std::vector<::std::set<int>> _T = {{}, {}};
+
                 for (int i = 0; i < mp.size(); ++i) _T[mp[i]->state_type == DFAState::StateType::END].insert(i);
+
                 T.insert(_T[0]); T.insert(_T[1]);
             }
 
             auto split = [&](const ::std::set<int> &S)
             {
                 ::std::vector<::std::set<int>> res = {S};
+
                 for (char c = static_cast<char>(0); c >= 0; ++c)
                 {
                     ::std::set<int> s1, s2;
+
                     auto flag_it = P.end();
+
                     for (auto i: S)
                     {
                         if (mp[i]->to.count(c))
@@ -195,8 +203,7 @@ namespace cre
 
     public:
 
-        ::std::shared_ptr<NFAState> start;
-        ::std::shared_ptr<NFAState> end;
+        ::std::shared_ptr<NFAState> start, end;
 
         NFAPair() : start(::std::make_shared<NFAState>()), end(::std::make_shared<NFAState>()) {}
         NFAPair(::std::shared_ptr<NFAState> start, ::std::shared_ptr<NFAState> end) : start(start), end(end) {}
@@ -457,7 +464,9 @@ namespace cre
     inline ::std::tuple<::std::shared_ptr<DFAState>, bool, bool> gen_dfa(const char *reading)
     {
         ::std::unordered_map<::std::string, ::std::shared_ptr<Node>> ref_map;
+
         ::std::shared_ptr<DFAState> dfa;
+
         bool begin = false, end = false;
         auto begin_address = reading;
 
@@ -709,14 +718,17 @@ namespace cre
         void cal_next()
         {
             if (!dfa->to.size()) return;
+
             ::std::set<::std::shared_ptr<DFAState>> caled = {dfa};
             ::std::vector<::std::shared_ptr<DFAState>> states;
+
             for (auto it: dfa->to) if (!caled.count(it.second))
             {
                 next[it.second] = dfa;
                 caled.insert(it.second);
                 states.push_back(it.second);
             }
+
             while (states.size())
             {
                 for (auto state: states) for (auto it: state->to) if (!caled.count(it.second))
@@ -757,17 +769,21 @@ namespace cre
         }
 
 
-        ::std::string match(const ::std::string str)
+        ::std::string match(const ::std::string &str)
         {
             ::std::string res, temp;
+
             auto reading = str.c_str();
             auto state = dfa;
+
             while (*reading)
             {
                 if (state->to.count(*reading)) state = state->to[*reading];
                 else if (end) return "";
                 else break;
+
                 temp += *reading;
+
                 if (state->state_type == DFAState::StateType::END)
                 {
                     res += temp;
@@ -778,13 +794,16 @@ namespace cre
             return res;
         }
 
-        ::std::string search(const ::std::string str)
+        ::std::string search(const ::std::string &str)
         {
             if (begin) return match(str);
+
             ::std::unordered_map<::std::shared_ptr<DFAState>, ::std::string> mapstr = {{dfa, ""}};
             ::std::string res, temp;
+
             auto reading = str.c_str();
             auto state = dfa;
+
             while (*reading)
             {
                 if (state->to.count(*reading))
@@ -806,13 +825,16 @@ namespace cre
             return end ? temp : res;
         }
 
-        ::std::string replace(const ::std::string str, const ::std::string target)
+        ::std::string replace(const ::std::string &str, const ::std::string &target)
         {
             if (begin) return target + str.substr(match(str).size());
+
             ::std::unordered_map<::std::shared_ptr<DFAState>, ::std::string> mapstr = {{dfa, ""}};
             ::std::string ret, res, temp;
+
             auto reading = str.c_str();
             auto state = dfa;
+
             while (*reading)
             {
                 if (state->to.count(*reading))
@@ -842,26 +864,66 @@ namespace cre
                 }
                 ++reading;
             }
+
             if (res.size()) ret += target + temp.substr(res.size());
+
+            return ret;
+        }
+
+        ::std::vector<::std::string> matches(const ::std::string &str)
+        {
+            ::std::vector<::std::string> ret;
+
+            ::std::string res, temp;
+
+            auto reading = str.c_str();
+            auto state = dfa;
+
+            while (*reading)
+            {
+                if (state->to.count(*reading)) state = state->to[*reading];
+                else if (end) return {};
+                else
+                {
+                    ret.push_back(res);
+                    res = temp = "";
+                }
+
+                temp += *reading;
+
+                if (state->state_type == DFAState::StateType::END)
+                {
+                    res += temp;
+                    temp = "";
+                }
+
+                ++reading;
+            }
+
             return ret;
         }
 
     };
 
 
-    inline ::std::string match(const ::std::string pattern, const ::std::string str)
+    inline ::std::string match(const ::std::string &pattern, const ::std::string &str)
     {
         return Pattern(pattern).match(str);
     }
 
-    inline ::std::string search(const ::std::string pattern, const ::std::string str)
+    inline ::std::string search(const ::std::string &pattern, const ::std::string &str)
     {
         return Pattern(pattern).search(str);
     }
 
-    inline ::std::string replace(const ::std::string pattern, const ::std::string str, const ::std::string target)
+    inline ::std::string replace(const ::std::string &pattern, const ::std::string &str, const ::std::string &target)
     {
         return Pattern(pattern).replace(str, target);
+    }
+
+    inline ::std::vector<::std::string> matches(const ::std::string &str)
+    {
+        return Pattern(pattern).matches(str);
     }
 
 }
