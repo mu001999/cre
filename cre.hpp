@@ -903,6 +903,8 @@ namespace cre
                 ++reading;
             }
 
+            if (state->state_type == DFAState::StateType::END && !res.empty()) ret.push_back(res);
+
             return ret;
         }
 
