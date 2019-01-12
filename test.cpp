@@ -1,5 +1,7 @@
 #include <cstdio>
 #include <cassert>
+#include <iostream>
+
 #include "cre.hpp"
 
 
@@ -16,6 +18,7 @@ using namespace std;
 #define ASSERT_WP(STR, TARGET) 						PRTL; assert(pattern.match(STR) == TARGET)
 #define ASSERT_SC(PATTERN, STR, TARGET) 			PRTL; assert(cre::search(PATTERN, STR) == TARGET)
 #define ASSERT_RP(PATTERN, STR, STARGET, TARGET)	PRTL; assert(cre::replace(PATTERN, STR, STARGET) == TARGET)
+#define ASSERT_MCS(PATTERN, STR, TARGET)			PRTL; assert(cre::matches(PATTERN, STR) == TARGET)
 
 
 //--TEST NOrMAL MATCH METHOD--
@@ -99,6 +102,8 @@ TEST(QUALIFIER)
 	ASSERT("2{3}", "2222", "222");
 	ASSERT("2{3,}", "22", "");
 	ASSERT("2{3,}", "22222", "22222");
+
+	ASSERT("<meta[^>]+>", "<meta name hahah >", "<meta name hahah >");
 END
 
 TEST(BRACKET)
@@ -172,6 +177,21 @@ END
 TEST(REPLACE_M)
 	ASSERT_RP("[A-Z]+", "ABCDEFGhijklmnOPQrstUVWxyz", "_", "_hijklmn_rst_xyz");
 	ASSERT_RP("(?:<sec>25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9][0-9]|[0-9])(\\.(?:<sec>)){3}", "ipv4: 192.168.1.1", "***.***.***.***", "ipv4: ***.***.***.***");
+END
+
+
+//--TEST MATCHES METHOD--
+
+TEST(MATCHES_M)
+	ASSERT_MCS(
+		"a[bc]+",
+		"ab cccccab ccccccccaccccb b",
+		vector<string>({
+			"ab",
+			"ab",
+			"accccb"
+		})
+	);
 END
 
 

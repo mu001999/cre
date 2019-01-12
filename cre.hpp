@@ -885,8 +885,11 @@ namespace cre
                 else if (end) return {};
                 else
                 {
-                    ret.push_back(res);
+                    state = dfa;
+                    if (res.empty()) ++reading;
+                    else ret.push_back(res);
                     res = temp = "";
+                    continue;
                 }
 
                 temp += *reading;
