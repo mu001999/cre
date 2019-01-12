@@ -16,7 +16,7 @@
 
 namespace cre
 {
-    
+
     ::std::bitset<128> SPACES(0X100003e00ULL);
     ::std::bitset<128> DIGITS(287948901175001088ULL);
     ::std::bitset<128> LWORDS("111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
@@ -27,7 +27,7 @@ namespace cre
     ::std::bitset<128> NOT_LWORDS = ~LWORDS;
     ::std::bitset<128> NOT_UWORDS = ~UWORDS;
     ::std::bitset<128> NOT_WORD_S = ~WORD_S;
-    
+
     ::std::unordered_map<char, ::std::bitset<128>> ECMAP =
     {
         {'s', SPACES}, {'S', NOT_SPACES},
@@ -36,8 +36,8 @@ namespace cre
         {'u', UWORDS}, {'U', NOT_UWORDS},
         {'w', WORD_S}, {'W', NOT_WORD_S}
     };
-    
-    
+
+
     class NFAState
     {
     public:
