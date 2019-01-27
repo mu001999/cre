@@ -4,7 +4,7 @@ Supports ASCII code, it can guarantee the correct operation when the input is co
 
 ---
 
-### SYNTAX
+### Syntax
 
 Metacharacter   | Description
 --------------- | -----------
