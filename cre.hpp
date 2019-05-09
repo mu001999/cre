@@ -931,4 +931,6 @@ namespace cre
         return Pattern(pattern).matches(str);
     }
 
+}
+
 #endif // COMMONREGEX_HPP
