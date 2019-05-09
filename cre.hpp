@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef COMMONREGEX_HPP
+#define COMMONREGEX_HPP
 
 #include <set>
 #include <tuple>
@@ -931,4 +931,4 @@ namespace cre
         return Pattern(pattern).matches(str);
     }
 
-}
+#endif // COMMONREGEX_HPP
