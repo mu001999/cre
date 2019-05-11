@@ -494,7 +494,7 @@ namespace cre
                     if (*(reading+1) && (isalpha(*(reading+1)) || (*(reading + 1) > 63 && *(reading + 1) < 94)))
                     {
                         ++reading;
-                        return static_cast<char>(toupper(*(reading+1)) - 64);
+                        return static_cast<char>(toupper(*reading) - 64);
                     }
                     else return 'c';
                 default: return *reading;
