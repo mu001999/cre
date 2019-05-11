@@ -114,14 +114,14 @@ namespace cre
 
             auto indexof_inmp = [&](::std::shared_ptr<DFAState> state)
             {
-                for (int i = 0; i < mp.size(); ++i) if (mp[i] == state) return i;
+                for (int i = 0; i < (int)mp.size(); ++i) if (mp[i] == state) return i;
                 return -1;
             };
 
             {
                 ::std::vector<::std::set<int>> _T = {{}, {}};
 
-                for (int i = 0; i < mp.size(); ++i) _T[mp[i]->state_type == DFAState::StateType::END].insert(i);
+                for (int i = 0; i < (int)mp.size(); ++i) _T[mp[i]->state_type == DFAState::StateType::END].insert(i);
 
                 T.insert(_T[0]); T.insert(_T[1]);
             }
@@ -175,7 +175,7 @@ namespace cre
             }
 
             ::std::vector<::std::shared_ptr<DFAState>> states;
-            for (auto &_: T) states.push_back(::std::make_shared<DFAState>());
+            for (std::size_t i = 0; i < T.size(); ++i) states.push_back(::std::make_shared<DFAState>());
             ::std::shared_ptr<DFAState> start = nullptr;
 
             {
@@ -183,11 +183,11 @@ namespace cre
 
                 auto indexof_inp = [&](::std::shared_ptr<DFAState> state)
                 {
-                    for (int i = 0, k = indexof_inmp(state); i < P.size(); ++i) if (P[i].count(k)) return i;
+                    for (int i = 0, k = indexof_inmp(state); i < (int)P.size(); ++i) if (P[i].count(k)) return i;
                     return -1;
                 };
 
-                for (int i = 0; i < P.size(); ++i)
+                for (int i = 0; i < (int)P.size(); ++i)
                 {
                     for (auto &k: P[i])
                     {
@@ -221,11 +221,11 @@ namespace cre
                 {
                     auto t = eps_closure(delta(q, c));
                     if (t.empty()) continue;
-                    for (int i = 0, j = -1; i < Q.size() && j == -1; ++i) if (Q[i] == q)
+                    for (int i = 0, j = -1; i < (int)Q.size() && j == -1; ++i) if (Q[i] == q)
                     {
-                        while (++j < Q.size()) if (Q[j] == t && (mp[i]->to[c] = mp[j]) == mp[j]) break;
+                        while (++j < (int)Q.size()) if (Q[j] == t && (mp[i]->to[c] = mp[j]) == mp[j]) break;
 
-                        if (j == Q.size())
+                        if (j == (int)Q.size())
                         {
                             Q.push_back(t);
                             work_list.push_back(t);
@@ -467,7 +467,6 @@ namespace cre
         ::std::shared_ptr<DFAState> dfa;
 
         bool begin = false, end = false;
-        auto begin_address = reading;
 
         ::std::function<char(const char *&)> translate_escape_chr;
         ::std::function<::std::bitset<128>(char &, const char *&, bool range)> translate_echr2bset;
