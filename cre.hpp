@@ -3,7 +3,6 @@
 
 #include <set>
 #include <tuple>
-#include <cstdio>
 #include <cctype>
 #include <string>
 #include <vector>
@@ -500,11 +499,7 @@ namespace cre
                 default: return *reading;
                 }
             }
-            else
-            {
-                printf("cre syntax error at pos %d: only '\\'\n", reading - begin_address);
-                return static_cast<char>(-1);
-            }
+            else return static_cast<char>(-1);
         };
 
         translate_echr2bset = [&](char &left, const char *&reading, bool range)
@@ -545,7 +540,7 @@ namespace cre
             {
                 if (*reading == '-')
                 {
-                    if (range || left == -1) printf("cre syntax error at pos %d: incorrect position of '-'\n", reading - begin_address);
+                    if (range || left == -1);
                     else range = true;
                 }
                 else if (range)
@@ -578,17 +573,13 @@ namespace cre
             {
                 ++reading;
                 if (*reading == ':') ++reading;
-                else printf("cre syntax error at pos %d: missing ':'\n", reading - begin_address);
                 if (*reading == '<') ++reading;
-                else printf("cre syntax error at pos %d: missing '<'\n", reading - begin_address);
                 ::std::string name;
                 while (isalnum(*reading) || *reading == '_') name += *reading++;
                 if (*reading == '>') ++reading;
-                else printf("cre syntax error at pos %d: missing '>'\n", reading - begin_address);
                 if (*reading == ')')
                 {
                     if (ref_map.count(name)) return ref_map[name];
-                    else printf("cre syntax error at pos %d: can't find ref to %s\n", reading - begin_address, name.c_str());
                 }
                 else
                 {
@@ -607,7 +598,6 @@ namespace cre
             if (*reading == '^')
             {
                 ++reading;
-                if (begin) printf("cre syntax error at pos %d: '^' should be the begin of pattern string\n", reading - begin_address);
                 begin = true;
             }
 
@@ -615,13 +605,11 @@ namespace cre
             {
                 ++reading;
                 node = gen_subexpr(reading);
-                if (*reading != ')') printf("cre syntax error at pos %d: missing ')'\n", reading - begin_address);
             }
             else if (*reading == '[')
             {
                 ++reading;
                 node = gen_bracket(reading);
-                if (*reading != ']') printf("cre syntax error at pos %d: missing ']'\n", reading - begin_address);
             }
             else if (*reading == '.') node = ::std::make_shared<DotNode>();
             else if (*reading && *reading != '|' && *reading != ')') node = *reading == '\\' ? translate_echr2node(reading) : ::std::make_shared<LeafNode>(*reading);
@@ -637,13 +625,11 @@ namespace cre
                     ++reading;
                     if (right) node = ::std::make_shared<CatNode>(node, right);
                     right = gen_subexpr(reading);
-                    if (*reading != ')') printf("cre syntax error at pos %d: missing ')'\n", reading - begin_address);
                     break;
                 case '[':
                     ++reading;
                     if (right) node = ::std::make_shared<CatNode>(node, right);
                     right = gen_bracket(reading);
-                    if (*reading != ']') printf("cre syntax error at pos %d: missing ']'\n", reading - begin_address);
                     break;
                 case '{':
                     ++reading;
@@ -659,9 +645,7 @@ namespace cre
 
                         if (right) right = ::std::make_shared<QualifierNode>(right, n, m);
                         else node = ::std::make_shared<QualifierNode>(node, n, m);
-                        if (*reading != '}') printf("cre syntax error at pos %d: missing '}'\n", reading - begin_address);
                     }
-                    else printf("cre syntax error at pos %d: only '{' & no number after '{'\n", reading - begin_address);
                     break;
                 case '*':
                     if (right) right = ::std::make_shared<ClosureNode>(right);
@@ -698,7 +682,6 @@ namespace cre
             if (*reading == '$')
             {
                 ++reading;
-                if (end) printf("cre syntax error at pos %d: '$' should be the end of the pattern string\n", reading - begin_address);
                 end = true;
             }
             return node;
