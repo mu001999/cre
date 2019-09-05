@@ -2,6 +2,8 @@ CommonRegEx, single-file
 
 Supports universal code, it can guarantee the correct operation when the input is correct, and the running result is not guaranteed when the input is wrong.
 
+There is also a UTF-8-spec version, named [yare](https://github.com/MU001999/yare)
+
 ---
 
 ### Syntax
