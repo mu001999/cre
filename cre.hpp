@@ -294,7 +294,7 @@ public:
                             mp[i]->to[c] = mp.back();
                         }
                     }
-                } 
+                }
             }
         }
 
