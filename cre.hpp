@@ -74,7 +74,8 @@ class DFAState
 class NFAPair
 {
   private:
-    void add2rS(std::set<std::shared_ptr<NFAState>> &rS, const std::shared_ptr<NFAState> &s)
+    void add2rS(std::set<std::shared_ptr<NFAState>> &rS,
+        std::shared_ptr<NFAState> s)
     {
         rS.insert(s);
         if (s->edge_type == NFAState::EdgeType::EPSILON)
@@ -90,7 +91,8 @@ class NFAPair
         }
     }
 
-    std::set<std::shared_ptr<NFAState>> eps_closure(std::set<std::shared_ptr<NFAState>> S)
+    std::set<std::shared_ptr<NFAState>>
+    eps_closure(const std::set<std::shared_ptr<NFAState>> &S)
     {
         std::set<std::shared_ptr<NFAState>> rS;
         for (auto &s: S)
@@ -100,7 +102,8 @@ class NFAPair
         return rS;
     }
 
-    std::set<std::shared_ptr<NFAState>> delta(std::set<std::shared_ptr<NFAState>> &q, unsigned char c)
+    std::set<std::shared_ptr<NFAState>>
+    delta(const std::set<std::shared_ptr<NFAState>> &q, unsigned char c)
     {
         std::set<std::shared_ptr<NFAState>> rq;
         for (auto &s: q)
@@ -113,21 +116,92 @@ class NFAPair
         return rq;
     }
 
-    std::shared_ptr<DFAState> dfa_minimization(std::vector<std::shared_ptr<DFAState>> &mp)
+    int indexof_inmp(std::vector<std::shared_ptr<DFAState>> &mp,
+        std::shared_ptr<DFAState> state)
     {
-        std::set<std::set<int>> T, P;
-
-        auto indexof_inmp = [&](std::shared_ptr<DFAState> state)
+        for (int i = 0; i < (int)mp.size(); ++i)
         {
-            for (int i = 0; i < (int)mp.size(); ++i)
+            if (mp[i] == state)
             {
-                if (mp[i] == state)
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    std::vector<std::set<int>>
+    split(std::vector<std::shared_ptr<DFAState>> &mp,
+        std::set<std::set<int>> &P,
+        const std::set<int> &S)
+    {
+        std::vector<std::set<int>> res = {S};
+
+        for (int _c = 0; _c < 256; ++_c)
+        {
+            unsigned char c = static_cast<unsigned char>(_c);
+            std::set<int> s1, s2;
+
+            auto flag_it = P.end();
+
+            for (auto i: S)
+            {
+                if (mp[i]->to.count(c))
                 {
-                    return i;
+                    int k = indexof_inmp(mp, mp[i]->to[c]);
+                    for (auto it = P.begin(); it != P.end(); ++it)
+                    {
+                        if (it->count(k))
+                        {
+                            if (it == flag_it)
+                            {
+                                s1.insert(i);
+                            }
+                            else if (flag_it == P.end())
+                            {
+                                flag_it = it;
+                                s1.insert(i);
+                            }
+                            else
+                            {
+                                s2.insert(i);
+                            }
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    s2.insert(i);
                 }
             }
-            return -1;
-        };
+
+            if (s1.size() && s2.size())
+            {
+                res = {s1, s2};
+                return res;
+            }
+        }
+        return res;
+    }
+
+    int indexof_inp(std::vector<std::shared_ptr<DFAState>> &mp,
+        std::vector<std::set<int>> &P,
+        std::shared_ptr<DFAState> state)
+    {
+        for (int i = 0, k = indexof_inmp(mp, state); i < (int)P.size(); ++i)
+        {
+            if (P[i].count(k))
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    std::shared_ptr<DFAState>
+    dfa_minimization(std::vector<std::shared_ptr<DFAState>> &mp)
+    {
+        std::set<std::set<int>> T, P;
 
         {
             std::vector<std::set<int>> _T = {{}, {}};
@@ -138,64 +212,12 @@ class NFAPair
             T.insert(_T[0]); T.insert(_T[1]);
         }
 
-        auto split = [&](const std::set<int> &S)
-        {
-            std::vector<std::set<int>> res = {S};
-
-            for (int _c = 0; _c < 256; ++_c)
-            {
-                unsigned char c = static_cast<unsigned char>(_c);
-                std::set<int> s1, s2;
-
-                auto flag_it = P.end();
-
-                for (auto i: S)
-                {
-                    if (mp[i]->to.count(c))
-                    {
-                        int k = indexof_inmp(mp[i]->to[c]);
-                        for (auto it = P.begin(); it != P.end(); ++it)
-                        {
-                            if (it->count(k))
-                            {
-                                if (it == flag_it)
-                                {
-                                    s1.insert(i);
-                                }
-                                else if (flag_it == P.end())
-                                {
-                                    flag_it = it;
-                                    s1.insert(i);
-                                }
-                                else
-                                {
-                                    s2.insert(i);
-                                }
-                                break;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        s2.insert(i);
-                    }
-                }
-
-                if (s1.size() && s2.size())
-                {
-                    res = {s1, s2};
-                    return res;
-                }
-            }
-            return res;
-        };
-
         while (P != T)
         {
             P = T; T.clear();
             for (auto &p: P)
             {
-                for (auto &_p: split(p))
+                for (auto &_p: split(mp, P, p))
                 {
                     T.insert(_p);
                 }
@@ -212,18 +234,6 @@ class NFAPair
         {
             std::vector<std::set<int>> P(T.begin(), T.end());
 
-            auto indexof_inp = [&](std::shared_ptr<DFAState> state)
-            {
-                for (int i = 0, k = indexof_inmp(state); i < (int)P.size(); ++i)
-                {
-                    if (P[i].count(k))
-                    {
-                        return i;
-                    }
-                }
-                return -1;
-            };
-
             for (int i = 0; i < (int)P.size(); ++i)
             {
                 for (auto &k: P[i])
@@ -238,7 +248,7 @@ class NFAPair
                     }
                     for (auto it: mp[k]->to)
                     {
-                        states[i]->to[it.first] = states[indexof_inp(it.second)];
+                        states[i]->to[it.first] = states[indexof_inp(mp, P, it.second)];
                     }
                 }
             }
@@ -1105,12 +1115,9 @@ class Pattern
     std::vector<std::string> matches(const std::string &str)
     {
         std::vector<std::string> ret;
-
         std::string res, temp;
-
         auto reading = str.c_str();
         auto state = dfa;
-
         while (*reading)
         {
             if (state->to.count(*reading))
@@ -1155,7 +1162,6 @@ class Pattern
         return ret;
     }
 };
-
 
 inline std::string match(const std::string &pattern, const std::string &str)
 {
