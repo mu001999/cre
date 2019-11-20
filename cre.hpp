@@ -2,6 +2,7 @@
 #define COMMONREGEX_HPP
 
 #include <set>
+#include <map>
 #include <tuple>
 #include <cctype>
 #include <string>
@@ -10,22 +11,23 @@
 #include <bitset>
 #include <algorithm>
 #include <functional>
-#include <unordered_map>
 
 namespace cre
 {
-inline std::bitset<256> SPACES(0X100003e00ULL);
-inline std::bitset<256> DIGITS(287948901175001088ULL);
-inline std::bitset<256> LWORDS("111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-inline std::bitset<256> UWORDS("1111111111111111111111111100000000000000000000000000000000000000000000000000000000000000000");
-inline std::bitset<256> WORD_S("111111111111111111111111110100001111111111111111111111111100000001111111111000000000000000000000000000000000000000000000000");
-inline std::bitset<256> NOT_SPACES = ~SPACES;
-inline std::bitset<256> NOT_DIGITS = ~DIGITS;
-inline std::bitset<256> NOT_LWORDS = ~LWORDS;
-inline std::bitset<256> NOT_UWORDS = ~UWORDS;
-inline std::bitset<256> NOT_WORD_S = ~WORD_S;
+namespace details
+{
+inline const std::bitset<256> SPACES(0X100003e00ULL);
+inline const std::bitset<256> DIGITS(287948901175001088ULL);
+inline const std::bitset<256> LWORDS("111111111111111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+inline const std::bitset<256> UWORDS("1111111111111111111111111100000000000000000000000000000000000000000000000000000000000000000");
+inline const std::bitset<256> WORD_S("111111111111111111111111110100001111111111111111111111111100000001111111111000000000000000000000000000000000000000000000000");
+inline const std::bitset<256> NOT_SPACES = ~SPACES;
+inline const std::bitset<256> NOT_DIGITS = ~DIGITS;
+inline const std::bitset<256> NOT_LWORDS = ~LWORDS;
+inline const std::bitset<256> NOT_UWORDS = ~UWORDS;
+inline const std::bitset<256> NOT_WORD_S = ~WORD_S;
 
-inline std::unordered_map<unsigned char, std::bitset<256>> ECMAP =
+inline const std::map<unsigned char, std::bitset<256>> ECMAP
 {
     {'s', SPACES}, {'S', NOT_SPACES},
     {'d', DIGITS}, {'D', NOT_DIGITS},
@@ -33,10 +35,11 @@ inline std::unordered_map<unsigned char, std::bitset<256>> ECMAP =
     {'u', UWORDS}, {'U', NOT_UWORDS},
     {'w', WORD_S}, {'W', NOT_WORD_S}
 };
+}
 
 class NFAState
 {
-public:
+  public:
     enum class EdgeType
     {
         EPSILON,
@@ -54,14 +57,14 @@ public:
 
 class DFAState
 {
-public:
+  public:
     enum class StateType
     {
         NORMAL,
         END
     } state_type;
 
-    std::unordered_map<unsigned char, std::shared_ptr<DFAState>> to;
+    std::map<unsigned char, std::shared_ptr<DFAState>> to;
 
     DFAState() : state_type(StateType::NORMAL) {}
     DFAState(StateType type) : state_type(type) {}
@@ -70,7 +73,7 @@ public:
 
 class NFAPair
 {
-private:
+  private:
     void add2rS(std::set<std::shared_ptr<NFAState>> &rS, const std::shared_ptr<NFAState> &s)
     {
         rS.insert(s);
@@ -243,7 +246,7 @@ private:
         return start;
     }
 
-public:
+  public:
     std::shared_ptr<NFAState> start, end;
 
     NFAPair() : start(std::make_shared<NFAState>()), end(std::make_shared<NFAState>()) {}
@@ -305,17 +308,17 @@ public:
 
 class Node
 {
-public:
+  public:
     virtual ~Node() {}
     virtual std::shared_ptr<NFAPair> compile() = 0;
 };
 
 class LeafNode : public Node
 {
-private:
+  private:
     unsigned char leaf;
 
-public:
+  public:
     LeafNode(unsigned char c) : leaf(c) {}
     virtual std::shared_ptr<NFAPair> compile()
     {
@@ -333,10 +336,10 @@ public:
 
 class CatNode : public Node
 {
-private:
+  private:
     std::shared_ptr<Node> left, right;
 
-public:
+  public:
     CatNode(std::shared_ptr<Node> left, std::shared_ptr<Node> right) : left(left), right(right) {}
     virtual std::shared_ptr<NFAPair> compile()
     {
@@ -353,10 +356,10 @@ public:
 
 class SelectNode : public Node
 {
-private:
+  private:
     std::shared_ptr<Node> left, right;
 
-public:
+  public:
     SelectNode(std::shared_ptr<Node> left, std::shared_ptr<Node> right) : left(left), right(right) {}
     virtual std::shared_ptr<NFAPair> compile()
     {
@@ -380,10 +383,10 @@ public:
 
 class ClosureNode : public Node
 {
-private:
+  private:
     std::shared_ptr<Node> content;
 
-public:
+  public:
     ClosureNode(std::shared_ptr<Node> content) : content(content) {}
     virtual std::shared_ptr<NFAPair> compile()
     {
@@ -405,11 +408,11 @@ public:
 
 class QualifierNode : public Node
 {
-private:
+  private:
     std::shared_ptr<Node> content;
     int n, m;
 
-public:
+  public:
     QualifierNode(std::shared_ptr<Node> content, int n, int m) : content(content), n(n), m(m) {}
     virtual std::shared_ptr<NFAPair> compile()
     {
@@ -483,7 +486,7 @@ public:
 
 class DotNode : public Node
 {
-public:
+  public:
     virtual std::shared_ptr<NFAPair> compile()
     {
         auto ptr = std::make_shared<NFAPair>();
@@ -500,10 +503,10 @@ public:
 
 class BracketNode : public Node
 {
-private:
+  private:
     std::bitset<256> chrs;
 
-public:
+  public:
     BracketNode(std::bitset<256> chrs) : chrs(chrs) {}
     virtual std::shared_ptr<NFAPair> compile()
     {
@@ -521,7 +524,7 @@ public:
 
 inline std::tuple<std::shared_ptr<DFAState>, bool, bool> gen_dfa(const unsigned char *reading)
 {
-    std::unordered_map<std::string, std::shared_ptr<Node>> ref_map;
+    std::map<std::string, std::shared_ptr<Node>> ref_map;
 
     std::shared_ptr<DFAState> dfa;
 
@@ -577,9 +580,9 @@ inline std::tuple<std::shared_ptr<DFAState>, bool, bool> gen_dfa(const unsigned 
     {
         unsigned char res = translate_escape_chr(reading);
         std::bitset<256> ret;
-        if (ECMAP.count(res))
+        if (details::ECMAP.count(res))
         {
-            ret = ECMAP[res];
+            ret = details::ECMAP.at(res);
         }
         else if (range)
         {
@@ -592,7 +595,7 @@ inline std::tuple<std::shared_ptr<DFAState>, bool, bool> gen_dfa(const unsigned 
         {
             left = res;
         }
-        if (!range && ECMAP.count(res))
+        if (!range && details::ECMAP.count(res))
         {
             left = 255;
         }
@@ -891,7 +894,7 @@ inline std::tuple<std::shared_ptr<DFAState>, bool, bool> gen_dfa(const unsigned 
 
 class Pattern
 {
-private:
+  private:
     void cal_next()
     {
         if (!dfa->to.size())
@@ -958,10 +961,10 @@ private:
     }
 
     std::shared_ptr<DFAState> dfa;
-    std::unordered_map<std::shared_ptr<DFAState>, std::shared_ptr<DFAState>> next;
+    std::map<std::shared_ptr<DFAState>, std::shared_ptr<DFAState>> next;
     bool begin, end;
 
-public:
+  public:
     Pattern(const std::string pattern)
     {
         std::tie(dfa, begin, end) = gen_dfa((unsigned char *)pattern.c_str());
@@ -1006,7 +1009,7 @@ public:
             return match(str);
         }
 
-        std::unordered_map<std::shared_ptr<DFAState>, std::string> mapstr = { { dfa, "" } };
+        std::map<std::shared_ptr<DFAState>, std::string> mapstr = { { dfa, "" } };
         std::string res, temp;
 
         auto reading = str.c_str();
@@ -1049,7 +1052,7 @@ public:
             return target + str.substr(match(str).size());
         }
 
-        std::unordered_map<std::shared_ptr<DFAState>, std::string> mapstr = { { dfa, "" } };
+        std::map<std::shared_ptr<DFAState>, std::string> mapstr = { { dfa, "" } };
         std::string ret, res, temp;
 
         auto reading = str.c_str();
