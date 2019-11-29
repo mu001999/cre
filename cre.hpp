@@ -35,7 +35,6 @@ inline const std::map<unsigned char, std::bitset<256>> ECMAP
     {'u', UWORDS}, {'U', NOT_UWORDS},
     {'w', WORD_S}, {'W', NOT_WORD_S}
 };
-}
 
 class NFAState
 {
@@ -54,11 +53,10 @@ class NFAState
     NFAState() : next(nullptr), next2(nullptr) {}
 };
 
-
 class DFAState
 {
   public:
-    enum class StateType
+    enum class State
     {
         NORMAL,
         END
@@ -66,10 +64,9 @@ class DFAState
 
     std::map<unsigned char, std::shared_ptr<DFAState>> to;
 
-    DFAState() : state_type(StateType::NORMAL) {}
-    DFAState(StateType type) : state_type(type) {}
+    DFAState() : state_type(State::NORMAL) {}
+    DFAState(State type) : state_type(type) {}
 };
-
 
 class NFAPair
 {
@@ -207,7 +204,7 @@ class NFAPair
             std::vector<std::set<int>> _T = {{}, {}};
             for (int i = 0; i < (int)mp.size(); ++i)
             {
-                _T[mp[i]->state_type == DFAState::StateType::END].insert(i);
+                _T[mp[i]->state_type == DFAState::State::END].insert(i);
             }
             T.insert(_T[0]); T.insert(_T[1]);
         }
@@ -238,9 +235,9 @@ class NFAPair
             {
                 for (auto &k: P[i])
                 {
-                    if (mp[k]->state_type == DFAState::StateType::END)
+                    if (mp[k]->state_type == DFAState::State::END)
                     {
-                        states[i]->state_type = DFAState::StateType::END;
+                        states[i]->state_type = DFAState::State::END;
                     }
                     if (k == 0)
                     {
@@ -268,8 +265,8 @@ class NFAPair
         std::vector<std::set<std::shared_ptr<NFAState>>> Q = {q0}, work_list = {q0};
         std::vector<std::shared_ptr<DFAState>> mp = {
             std::make_shared<DFAState>((std::find(q0.begin(), q0.end(), end) != q0.end())
-                ? DFAState::StateType::END
-                : DFAState::StateType::NORMAL)
+                ? DFAState::State::END
+                : DFAState::State::NORMAL)
         };
 
         while (work_list.size())
@@ -301,8 +298,8 @@ class NFAPair
                             Q.push_back(t);
                             work_list.push_back(t);
                             mp.push_back(std::make_shared<DFAState>((std::find(t.begin(), t.end(), end) != t.end())
-                                ? DFAState::StateType::END
-                                : DFAState::StateType::NORMAL
+                                ? DFAState::State::END
+                                : DFAState::State::NORMAL
                             ));
                             mp[i]->to[c] = mp.back();
                         }
@@ -314,7 +311,6 @@ class NFAPair
         return dfa_minimization(mp);
     }
 };
-
 
 class Node
 {
@@ -341,7 +337,6 @@ class LeafNode : public Node
 
         return ptr;
     }
-
 };
 
 class CatNode : public Node
@@ -531,20 +526,14 @@ class BracketNode : public Node
     }
 };
 
-
-inline std::tuple<std::shared_ptr<DFAState>, bool, bool> gen_dfa(const unsigned char *reading)
+class Parser
 {
+  private:
+    bool begin, end;
     std::map<std::string, std::shared_ptr<Node>> ref_map;
 
-    std::shared_ptr<DFAState> dfa;
-
-    bool begin = false, end = false;
-
-    std::function<unsigned char(const unsigned char *&)> translate_escape_chr;
-    std::function<std::bitset<256>(unsigned char &, const unsigned char *&, bool range)> translate_echr2bset;
-    std::function<std::shared_ptr<Node>(const unsigned char *&)> translate_echr2node, gen_bracket, gen_subexpr, gen_node;
-
-    translate_escape_chr = [&](const unsigned char *&reading) -> unsigned char
+    unsigned char
+    translate_escape_chr(const unsigned char *&reading)
     {
         ++reading;
         if (*reading)
@@ -584,11 +573,14 @@ inline std::tuple<std::shared_ptr<DFAState>, bool, bool> gen_dfa(const unsigned 
             }
         }
         else return 255;
-    };
+    }
 
-    translate_echr2bset = [&](unsigned char &left, const unsigned char *&reading, bool range)
+    std::bitset<256>
+    translate_echr2bset(unsigned char &left,
+        const unsigned char *&reading,
+        bool range)
     {
-        unsigned char res = translate_escape_chr(reading);
+        auto res = translate_escape_chr(reading);
         std::bitset<256> ret;
         if (details::ECMAP.count(res))
         {
@@ -610,9 +602,10 @@ inline std::tuple<std::shared_ptr<DFAState>, bool, bool> gen_dfa(const unsigned 
             left = 255;
         }
         return ret;
-    };
+    }
 
-    translate_echr2node = [&](const unsigned char *&reading)
+    std::shared_ptr<Node>
+    translate_echr2node(const unsigned char *&reading)
     {
         std::shared_ptr<Node> node = nullptr;
         unsigned char left = 255;
@@ -626,9 +619,10 @@ inline std::tuple<std::shared_ptr<DFAState>, bool, bool> gen_dfa(const unsigned 
             node = std::make_shared<LeafNode>(left);
         }
         return node;
-    };
+    }
 
-    gen_bracket = [&](const unsigned char *&reading)
+    std::shared_ptr<Node>
+    gen_bracket(const unsigned char *&reading)
     {
         unsigned char left = 255;
         bool range = false, exclude = false;
@@ -692,9 +686,10 @@ inline std::tuple<std::shared_ptr<DFAState>, bool, bool> gen_dfa(const unsigned 
         }
 
         return std::make_shared<BracketNode>(chrs);
-    };
+    }
 
-    gen_subexpr = [&](const unsigned char *&reading)
+    std::shared_ptr<Node>
+    gen_subexpr(const unsigned char *&reading)
     {
         std::shared_ptr<Node> node = nullptr;
         if (*reading == '?')
@@ -735,9 +730,10 @@ inline std::tuple<std::shared_ptr<DFAState>, bool, bool> gen_dfa(const unsigned 
             node = gen_node(reading);
         }
         return node;
-    };
+    }
 
-    gen_node = [&](const unsigned char *&reading)
+    std::shared_ptr<Node>
+    gen_node(const unsigned char *&reading)
     {
         std::shared_ptr<Node> node = nullptr, right = nullptr;
 
@@ -888,19 +884,25 @@ inline std::tuple<std::shared_ptr<DFAState>, bool, bool> gen_dfa(const unsigned 
             end = true;
         }
         return node;
-    };
+    }
 
-    auto node = gen_node(reading);
-    if (!node)
+  public:
+    Parser() = default;
+
+    std::tuple<std::shared_ptr<DFAState>, bool, bool>
+    gen_dfa(const unsigned char *reading)
     {
-        dfa = std::make_shared<DFAState>(DFAState::StateType::END);
+        std::shared_ptr<DFAState> dfa;
+
+        auto node = gen_node(reading);
+        dfa = node
+            ? node->compile()->to_dfa()
+            : std::make_shared<DFAState>(DFAState::State::END);
+
+        return std::make_tuple(dfa, begin, end);
     }
-    else
-    {
-        dfa = node->compile()->to_dfa();
-    }
-    return std::make_tuple(dfa, begin, end);
-}
+};
+} // namespace details
 
 class Pattern
 {
@@ -912,8 +914,8 @@ class Pattern
             return;
         }
 
-        std::set<std::shared_ptr<DFAState>> caled = {dfa};
-        std::vector<std::shared_ptr<DFAState>> states;
+        std::set<std::shared_ptr<details::DFAState>> caled = {dfa};
+        std::vector<std::shared_ptr<details::DFAState>> states;
 
         for (auto it: dfa->to)
         {
@@ -954,7 +956,7 @@ class Pattern
                 }
             }
 
-            std::vector<std::shared_ptr<DFAState>> _ss;
+            std::vector<std::shared_ptr<details::DFAState>> _ss;
             for (auto state: states)
             {
                 for (auto it: state->to)
@@ -970,14 +972,14 @@ class Pattern
         }
     }
 
-    std::shared_ptr<DFAState> dfa;
-    std::map<std::shared_ptr<DFAState>, std::shared_ptr<DFAState>> next;
+    std::shared_ptr<details::DFAState> dfa;
+    std::map<std::shared_ptr<details::DFAState>, std::shared_ptr<details::DFAState>> next;
     bool begin, end;
 
   public:
     Pattern(const std::string pattern)
     {
-        std::tie(dfa, begin, end) = gen_dfa((unsigned char *)pattern.c_str());
+        std::tie(dfa, begin, end) = details::Parser().gen_dfa((unsigned char *)pattern.c_str());
         cal_next();
     }
 
@@ -1002,7 +1004,7 @@ class Pattern
 
             temp += *reading;
 
-            if (state->state_type == DFAState::StateType::END)
+            if (state->state_type == details::DFAState::State::END)
             {
                 res += temp;
                 temp = "";
@@ -1019,7 +1021,7 @@ class Pattern
             return match(str);
         }
 
-        std::map<std::shared_ptr<DFAState>, std::string> mapstr = { { dfa, "" } };
+        std::map<std::shared_ptr<details::DFAState>, std::string> mapstr = { { dfa, "" } };
         std::string res, temp;
 
         auto reading = str.c_str();
@@ -1031,7 +1033,7 @@ class Pattern
             {
                 state = state->to[*reading];
                 mapstr[state] = (temp += *reading);
-                if (state->state_type == DFAState::StateType::END)
+                if (state->state_type == details::DFAState::State::END)
                 {
                     res = str.substr(reading - str.c_str() - temp.size() + 1, temp.size());
                 }
@@ -1062,7 +1064,7 @@ class Pattern
             return target + str.substr(match(str).size());
         }
 
-        std::map<std::shared_ptr<DFAState>, std::string> mapstr = { { dfa, "" } };
+        std::map<std::shared_ptr<details::DFAState>, std::string> mapstr = { { dfa, "" } };
         std::string ret, res, temp;
 
         auto reading = str.c_str();
@@ -1074,7 +1076,7 @@ class Pattern
             {
                 state = state->to[*reading];
                 mapstr[state] = (temp += *reading);
-                if (state->state_type == DFAState::StateType::END)
+                if (state->state_type == details::DFAState::State::END)
                 {
                     res = str.substr(reading - str.c_str() - temp.size() + 1, temp.size());
                 }
@@ -1145,7 +1147,7 @@ class Pattern
 
             temp += *reading;
 
-            if (state->state_type == DFAState::StateType::END)
+            if (state->state_type == details::DFAState::State::END)
             {
                 res += temp;
                 temp = "";
@@ -1154,7 +1156,7 @@ class Pattern
             ++reading;
         }
 
-        if (state->state_type == DFAState::StateType::END && !res.empty())
+        if (state->state_type == details::DFAState::State::END && !res.empty())
         {
             ret.push_back(res);
         }
