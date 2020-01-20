@@ -1042,6 +1042,10 @@ class Pattern
             {
                 return res;
             }
+            /**
+             * Bug:
+             * there will return wrong result if the last state assume the pre str is matched
+            */
             else if (next.count(state))
             {
                 state = next[state];
