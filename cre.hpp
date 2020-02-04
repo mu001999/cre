@@ -907,80 +907,13 @@ class Parser
 class Pattern
 {
   private:
-    void cal_next()
-    {
-        if (!dfa->to.size())
-        {
-            return;
-        }
-
-        std::set<std::shared_ptr<details::DFAState>> caled = {dfa};
-        std::vector<std::shared_ptr<details::DFAState>> states;
-
-        for (auto it: dfa->to)
-        {
-            if (!caled.count(it.second))
-            {
-                next[it.second] = dfa;
-                caled.insert(it.second);
-                states.push_back(it.second);
-            }
-        }
-
-        while (states.size())
-        {
-            for (auto state: states)
-            {
-                for (auto it: state->to)
-                {
-                    if (!caled.count(it.second))
-                    {
-                        auto _s = state;
-                        while (_s != dfa)
-                        {
-                            if (next[_s]->to.count(it.first))
-                            {
-                                next[it.second] = _s;
-                                break;
-                            }
-                            else
-                            {
-                                _s = next[_s];
-                            }
-                        }
-                        if (!next.count(it.second))
-                        {
-                            next[it.second] = dfa;
-                        }
-                    }
-                }
-            }
-
-            std::vector<std::shared_ptr<details::DFAState>> _ss;
-            for (auto state: states)
-            {
-                for (auto it: state->to)
-                {
-                    if (!caled.count(it.second))
-                    {
-                        _ss.push_back(it.second);
-                        caled.insert(it.second);
-                    }
-                }
-            }
-            states = _ss;
-        }
-    }
-
     std::shared_ptr<details::DFAState> dfa;
-    std::map<std::shared_ptr<details::DFAState>, std::shared_ptr<details::DFAState>> next;
     bool begin, end;
 
   public:
     Pattern(const std::string pattern)
     {
         std::tie(dfa, begin, end) = details::Parser().gen_dfa((unsigned char *)pattern.c_str());
-        cal_next();
     }
 
     std::string match(const std::string &str)
@@ -1021,44 +954,17 @@ class Pattern
             return match(str);
         }
 
-        std::map<std::shared_ptr<details::DFAState>, std::string> mapstr = { { dfa, "" } };
-        std::string res, temp;
-
-        auto reading = str.c_str();
-        auto state = dfa;
-
-        while (*reading)
+        std::string res;
+        for (std::size_t i = 0; i < str.size(); ++i)
         {
-            if (state->to.count(*reading))
-            {
-                state = state->to[*reading];
-                mapstr[state] = (temp += *reading);
-                if (state->state_type == details::DFAState::State::END)
-                {
-                    res = str.substr(reading - str.c_str() - temp.size() + 1, temp.size());
-                }
-            }
-            else if (!end && res.size())
+            res = match(str.substr(i));
+            if (!res.empty())
             {
                 return res;
             }
-            /**
-             * Bug:
-             * there will return wrong result if the last state assume the pre str is matched
-            */
-            else if (next.count(state))
-            {
-                state = next[state];
-                temp = mapstr[state];
-                continue;
-            }
-            else
-            {
-                mapstr[state] = temp = "";
-            }
-            ++reading;
         }
-        return end ? temp : res;
+
+        return res;
     }
 
     std::string replace(const std::string &str, const std::string &target)
@@ -1068,104 +974,43 @@ class Pattern
             return target + str.substr(match(str).size());
         }
 
-        std::map<std::shared_ptr<details::DFAState>, std::string> mapstr = { { dfa, "" } };
-        std::string ret, res, temp;
-
-        auto reading = str.c_str();
-        auto state = dfa;
-
-        while (*reading)
+        std::string res;
+        for (std::size_t i = 0; i < str.size(); ++i)
         {
-            if (state->to.count(*reading))
+            auto tmp = match(str.substr(i));
+            if (tmp.empty())
             {
-                state = state->to[*reading];
-                mapstr[state] = (temp += *reading);
-                if (state->state_type == details::DFAState::State::END)
-                {
-                    res = str.substr(reading - str.c_str() - temp.size() + 1, temp.size());
-                }
-            }
-            else if (!end && res.size())
-            {
-                ret += target + temp.substr(res.size());
-                state = dfa;
-                res = temp = "";
-                continue;
-            }
-            else if (next.count(state))
-            {
-                state = next[state];
-                if (mapstr[state].size() < temp.size())
-                {
-                    ret += temp.substr(mapstr[state].size());
-                }
-                temp = mapstr[state];
-                continue;
+                res += str[i];
             }
             else
             {
-                mapstr[state] = temp = "";
-                ret += *reading;
+                res += target;
+                i += tmp.size() - 1;
             }
-            ++reading;
         }
 
-        if (res.size())
-        {
-            ret += target + temp.substr(res.size());
-        }
-
-        return ret;
+        return res;
     }
 
     std::vector<std::string> matches(const std::string &str)
     {
-        std::vector<std::string> ret;
-        std::string res, temp;
-        auto reading = str.c_str();
-        auto state = dfa;
-        while (*reading)
+        if (begin)
         {
-            if (state->to.count(*reading))
-            {
-                state = state->to[*reading];
-            }
-            else if (end)
-            {
-                return {};
-            }
-            else
-            {
-                state = dfa;
-                if (res.empty())
-                {
-                    ++reading;
-                }
-                else
-                {
-                    ret.push_back(res);
-                }
-                res = temp = "";
-                continue;
-            }
-
-            temp += *reading;
-
-            if (state->state_type == details::DFAState::State::END)
-            {
-                res += temp;
-                temp = "";
-            }
-
-            ++reading;
+            return {match(str)};
         }
 
-        if (state->state_type == details::DFAState::State::END && !res.empty())
+        std::vector<std::string> res;
+        for (std::size_t i = 0; i < str.size(); ++i)
         {
-            ret.push_back(res);
+            auto tmp = match(str.substr(i));
+            if (!tmp.empty())
+            {
+                res.push_back(tmp);
+                i += tmp.size() - 1;
+            }
         }
 
-        return ret;
+        return res;
     }
 };
 
