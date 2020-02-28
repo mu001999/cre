@@ -160,6 +160,11 @@ TEST(COMPLEX)
 		ASSERT_WP("abc1230abcdefg", "abc1230abc");
 		ASSERT_WP("cccbbbaaadefg", "cccbbbaaa");
 	}
+
+	{
+		auto pattern = cre::Pattern("(?:<num>[1-9][0-9]*)([+\\-\\*/](?:<num>))*");
+		ASSERT_WP("1+2+3+4", "1+2+3+4");
+	}
 END
 
 

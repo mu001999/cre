@@ -933,7 +933,10 @@ class Pattern
             {
                 return "";
             }
-            else break;
+            else
+            {
+                break;
+            }
 
             temp += *reading;
 
