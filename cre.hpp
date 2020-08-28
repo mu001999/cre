@@ -489,23 +489,6 @@ class QualifierNode : public Node
     }
 };
 
-class DotNode : public Node
-{
-  public:
-    virtual std::shared_ptr<NFAPair> compile()
-    {
-        auto ptr = std::make_shared<NFAPair>();
-
-        ptr->start->edge_type = NFAState::EdgeType::CCL;
-        ptr->end->edge_type = NFAState::EdgeType::EMPTY;
-        ptr->start->next = ptr->end;
-        ptr->start->input_set = 1024ULL;
-        ptr->start->input_set.flip();
-
-        return ptr;
-    }
-};
-
 class BracketNode : public Node
 {
   private:
