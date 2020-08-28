@@ -755,7 +755,8 @@ class Parser
         }
         else if (*reading == '.')
         {
-            node = std::make_shared<DotNode>();
+            std::bitset<256> accept(1024UL);
+            node = std::make_shared<BracketNode>(accept.flip());
         }
         else if (*reading && *reading != '|' && *reading != ')')
         {
@@ -849,7 +850,7 @@ class Parser
                 {
                     node = std::make_shared<CatNode>(node, right);
                 }
-                right = std::make_shared<DotNode>();
+                right = std::make_shared<BracketNode>(std::bitset<256>(1024ULL).flip());
                 break;
             default:
                 if (right)
